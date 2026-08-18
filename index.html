@@ -19,20 +19,20 @@
 
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg-body); padding: 15px; display: flex; justify-content: center; margin: 0; }
         .container { max-width: 850px; width: 100%; background: white; padding: 25px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); box-sizing: border-box; }
-        
+
         h2 { color: #1e293b; margin-top: 0; font-size: 1.4rem; }
-        
+
         .drop-zone { border: 2px dashed var(--primary); padding: 20px; text-align: center; border-radius: 12px; cursor: pointer; color: var(--primary); margin-bottom: 15px; transition: 0.3s; outline: none; }
         .drop-zone:hover { background: #eef2ff; }
-        
+
         /* Colección UI */
         .collection-section { background: #f8fafc; border: 1px solid var(--border-color); border-radius: 12px; padding: 12px; margin-bottom: 15px; }
         .collection-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px; }
         .collection-title { font-weight: 700; color: #334155; font-size: 0.95rem; }
         .collection-actions { display: flex; gap: 6px; flex-wrap: wrap; }
-        
+
         .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(115px, 1fr)); gap: 10px; max-height: 220px; overflow-y: auto; padding: 4px; }
-        
+
         .card-thumb { 
             border: 2px solid var(--border-color); 
             border-radius: 8px; 
@@ -50,13 +50,13 @@
         .card-thumb:active { cursor: grabbing; }
         .card-thumb:hover { border-color: var(--primary); }
         .card-thumb.active { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2); }
-        
+
         /* Efectos visuales de arrastre (Drag and Drop) */
         .card-thumb.dragging { opacity: 0.4; transform: scale(0.96); }
         .card-thumb.drag-over { border: 2px dashed var(--primary); background: #eef2ff; }
 
         .card-thumb img { width: 100%; height: 65px; object-fit: cover; border-radius: 4px; pointer-events: none; }
-        
+
         /* Botones de control en tarjetas */
         .card-controls { display: flex; gap: 4px; margin-top: 6px; width: 100%; justify-content: space-between; }
         .card-controls .btn-mini { 
@@ -86,7 +86,7 @@
 
         .tools-bar { display: flex; gap: 8px; margin-bottom: 12px; background: #f1f5f9; padding: 10px; border-radius: 10px; align-items: center; flex-wrap: wrap; }
         .tools-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; width: 100%; }
-        
+
         .tool-btn { background: white; border: 1px solid var(--border-color); padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; color: #334155; transition: 0.2s; touch-action: manipulation; }
         .tool-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
         .tool-btn.btn-danger { color: var(--danger); border-color: #fca5a5; }
@@ -102,14 +102,14 @@
         .btn-download:hover:not(:disabled) { background: var(--primary-hover); }
         .btn-copy { background: var(--secondary); flex: 1; padding: 12px; }
         .btn-copy:hover:not(:disabled) { background: var(--secondary-hover); }
-        
+
         .btn-action-col { background: white; border: 1px solid var(--border-color); color: #334155; font-size: 0.8rem; padding: 5px 10px; }
         .btn-action-col:hover:not(:disabled) { background: #f1f5f9; }
         .btn-delete-all { background: #fee2e2; border: 1px solid #fca5a5; color: var(--danger); font-size: 0.8rem; padding: 5px 10px; }
         .btn-delete-all:hover:not(:disabled) { background: #fecaca; }
 
         .result-card { border: 2px solid var(--border-color); padding: 15px; border-radius: 16px; background: #ffffff; margin-top: 15px; text-align: left; }
-        
+
         .canvas-container { 
             position: relative; 
             width: 100%; 
@@ -119,14 +119,14 @@
             touch-action: none;
         }
         #preview-img-display { width: 100%; display: block; border-radius: 8px; user-select: none; }
-        
+
         #overlayCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: auto; touch-action: none; }
 
         .separator { height: 2px; background: var(--border-color); margin: 15px 0; border-radius: 2px; }
 
         #preview-text-display { font-size: 1.1rem; color: #334155; font-weight: 600; margin-bottom: 6px; word-break: break-word; }
         #preview-indications-display { font-size: 0.95rem; color: #64748b; white-space: pre-wrap; word-break: break-word; line-height: 1.5; }
-        
+
         #hiddenCanvas { display: none; }
         #toast { position: fixed; bottom: 20px; right: 20px; background: #1e293b; color: white; padding: 10px 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); display: none; font-size: 0.9rem; z-index: 1000; }
     </style>
@@ -135,7 +135,7 @@
 
 <div class="container">
     <h2>🎨 Creador con Figuras, Flechas y Colección</h2>
-    
+
     <div class="drop-zone" id="dropZone" tabindex="0">
         Toca para subir o usa <b>Ctrl + V</b> para pegar imágenes
     </div>
@@ -163,12 +163,12 @@
                 <button class="tool-btn" data-tool="number">🔢 Número</button>
                 <button class="tool-btn btn-danger" id="undoBtn">↩️ Deshacer</button>
                 <button class="tool-btn btn-danger" id="clearBtn">🗑️ Borrar Trazos</button>
-                
+
                 <div class="color-picker-container">
                     Color: <input type="color" id="colorPicker" value="#ef4444">
                 </div>
             </div>
-            
+
             <div class="tools-row" style="margin-top: 4px; padding-top: 4px; border-top: 1px dashed var(--border-color);">
                 <label class="checkbox-group" title="Agrega una insignia numérica a las flechas y elipses">
                     <input type="checkbox" id="autoNumberShapesCheck" checked> Numerar figuras (flechas / elipses)
@@ -178,12 +178,12 @@
                 </label>
             </div>
         </div>
-        
+
         <textarea id="textInput" placeholder="Descripción principal..."></textarea>
         <label class="checkbox-group"><input type="checkbox" id="bulletCheck"> Agregar punto decorativo (•) al inicio del título</label>
-        
+
         <textarea id="indicationsInput" rows="3" placeholder="Escribe tus notas / indicaciones..."></textarea>
-        
+
         <div class="button-group">
             <button id="downloadBtn" class="btn-download">📥 Descargar Esta Imagen</button>
             <button id="copyBtn" class="btn-copy">📋 Copiar Imagen</button>
@@ -199,7 +199,7 @@
             <div id="preview-indications-display"></div>
         </div>
     </div>
-    
+
     <canvas id="hiddenCanvas"></canvas>
 </div>
 
@@ -237,6 +237,7 @@
     let currentTool = 'arrow';
     let isDrawing = false;
     let startX, startY;
+    let lastX, lastY;
 
     // Variables de Drag & Drop
     let draggedIndex = null;
@@ -520,21 +521,24 @@
         autoFormatIndications();
     };
 
+    // Coordenadas unificadas con Pointer Events (Mouse, Touch y Stylus)
     function getPointerPos(e) {
         const rect = overlayCanvas.getBoundingClientRect();
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
         return {
-            x: clientX - rect.left,
-            y: clientY - rect.top
+            x: e.clientX - rect.left,
+            y: e.clientY - rect.top
         };
     }
 
-    function handleStart(e) {
+    overlayCanvas.addEventListener('pointerdown', (e) => {
         if (currentIndex === -1) return;
+        overlayCanvas.setPointerCapture(e.pointerId);
+        
         const pos = getPointerPos(e);
         startX = pos.x;
         startY = pos.y;
+        lastX = pos.x;
+        lastY = pos.y;
 
         const item = collection[currentIndex];
         if (currentTool === 'number') {
@@ -551,32 +555,34 @@
         } else {
             isDrawing = true;
         }
-    }
+    });
 
-    function handleMove(e) {
+    overlayCanvas.addEventListener('pointermove', (e) => {
         if (!isDrawing || currentTool === 'number' || currentIndex === -1) return;
-        if (e.cancelable) e.preventDefault();
         
         const pos = getPointerPos(e);
+        lastX = pos.x;
+        lastY = pos.y;
         redrawOverlay();
-        
-        const numToPreview = autoNumberShapesCheck.checked ? collection[currentIndex].numberCounter : null;
-        drawShape(overlayCanvas.getContext('2d'), startX, startY, pos.x, pos.y, currentTool, colorPicker.value, 4, 1, numToPreview);
-    }
 
-    function handleEnd(e) {
+        const numToPreview = autoNumberShapesCheck.checked ? collection[currentIndex].numberCounter : null;
+        drawShape(overlayCanvas.getContext('2d'), startX, startY, lastX, lastY, currentTool, colorPicker.value, 4, 1, numToPreview);
+    });
+
+    function endDrawing(e) {
         if (!isDrawing || currentTool === 'number' || currentIndex === -1) return;
         isDrawing = false;
         
-        let endX = startX;
-        let endY = startY;
-        if (e.changedTouches && e.changedTouches[0]) {
-            const rect = overlayCanvas.getBoundingClientRect();
-            endX = e.changedTouches[0].clientX - rect.left;
-            endY = e.changedTouches[0].clientY - rect.top;
-        }
+        try {
+            if (overlayCanvas.hasPointerCapture(e.pointerId)) {
+                overlayCanvas.releasePointerCapture(e.pointerId);
+            }
+        } catch(err) {}
 
         const item = collection[currentIndex];
+        const endX = lastX !== undefined ? lastX : startX;
+        const endY = lastY !== undefined ? lastY : startY;
+
         if (Math.abs(endX - startX) > 6 || Math.abs(endY - startY) > 6) {
             let assignedNum = null;
             if (autoNumberShapesCheck.checked) {
@@ -597,30 +603,23 @@
         redrawOverlay();
     }
 
-    // Eventos Mouse Canvas
-    overlayCanvas.addEventListener('mousedown', handleStart);
-    window.addEventListener('mousemove', handleMove);
-    window.addEventListener('mouseup', handleEnd);
-
-    // Eventos Touch Canvas
-    overlayCanvas.addEventListener('touchstart', (e) => { e.preventDefault(); handleStart(e); }, { passive: false });
-    window.addEventListener('touchmove', handleMove, { passive: false });
-    window.addEventListener('touchend', handleEnd);
+    overlayCanvas.addEventListener('pointerup', endDrawing);
+    overlayCanvas.addEventListener('pointercancel', endDrawing);
 
     function autoFormatIndications() {
         if (!autoInstructionsCheck.checked || currentIndex === -1) return;
         const item = collection[currentIndex];
-        
+
         const numberedItems = item.annotations.filter(a => a.type === 'number' || a.number);
         if (numberedItems.length === 0) return;
-        
+
         let currentText = indicationsInput.value.trim();
         if (!currentText || /^\d+\s*\.-\s*/.test(currentText)) {
             let generatedLines = numberedItems.map((n) => {
                 const num = n.number;
                 return `${num} .- `;
             }).join("\n");
-            
+
             indicationsInput.value = generatedLines;
             item.indications = generatedLines;
             updatePreview();
@@ -631,7 +630,7 @@
         const ctx = overlayCanvas.getContext('2d');
         ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
         if (currentIndex === -1) return;
-        
+
         collection[currentIndex].annotations.forEach(item => {
             if (item.type === 'number') {
                 drawNumber(ctx, item.startX, item.startY, item.number, item.color, 1);
@@ -703,7 +702,7 @@
     function updatePreview() {
         const txt = textInput.value.trim();
         previewText.innerText = bulletCheck.checked ? "• " + txt : txt;
-        
+
         const ind = indicationsInput.value.trim();
         previewIndications.innerText = ind ? ind : "";
     }
@@ -719,16 +718,16 @@
             img.onload = () => {
                 const c = document.createElement('canvas');
                 const ctx = c.getContext('2d');
-                
+
                 const textStr = item.bullet ? (item.title ? `• ${item.title}` : '') : item.title;
                 const indLines = (item.indications || '').trim().split('\n').filter(l => l.trim() !== '');
-                
+
                 let extraHeight = 80 + (indLines.length * 35);
                 if (textStr) extraHeight += 45;
 
                 c.width = img.width;
                 c.height = img.height + extraHeight;
-                
+
                 ctx.fillStyle = "white"; 
                 ctx.fillRect(0, 0, c.width, c.height);
                 ctx.drawImage(img, 0, 0);
@@ -744,7 +743,7 @@
                         drawShape(ctx, an.startX * scaleX, an.startY * scaleY, an.endX * scaleX, an.endY * scaleY, an.type, an.color, 4, avgScale, an.number);
                     }
                 });
-                
+
                 ctx.strokeStyle = "#e2e8f0"; 
                 ctx.lineWidth = 4;
                 ctx.beginPath(); 
@@ -760,7 +759,7 @@
                     ctx.fillText(textStr, 35, currentY);
                     currentY += 50;
                 }
-                
+
                 ctx.font = "26px sans-serif";
                 indLines.forEach(line => {
                     ctx.fillStyle = "#64748b";
