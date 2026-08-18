@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Creador de Imagen con Colecciones e Indicadores</title>
+    <!-- JSZip para empaquetar descargas de la colección completa -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --secondary: #10b981;
+            --secondary-hover: #059669;
+            --danger: #ef4444;
+            --bg-body: #f8fafc;
+            --border-color: #e2e8f0;
+        }
+
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-body); padding: 15px; display: flex; justify-content: center; margin: 0; }
+        .container { max-width: 850px; width: 100%; background: white; padding: 25px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); box-sizing: border-box; }
+        
+        h2 { color: #1e293b; margin-top: 0; font-size: 1.4rem; }
+        
+        .drop-zone { border: 2px dashed var(--primary); padding: 20px; text-align: center; border-radius: 12px; cursor: pointer; color: var(--primary); margin-bottom: 15px; transition: 0.3s; outline: none; }
+        .drop-zone:hover { background: #eef2ff; }
+        
+        /* Colección UI */
+        .collection-section { background: #f8fafc; border: 1px solid var(--border-color); border-radius: 12px; padding: 12px; margin-bottom: 15px; }
+        .collection-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px; }
+        .collection-title { font-weight: 700; color: #334155; font-size: 0.95rem; }
+        .collection-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+        
+        .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(115px, 1fr)); gap: 10px; max-height: 220px; overflow-y: auto; padding: 4px; }
+        
+        .card-thumb { 
+            border: 2px solid var(--border-color); 
+            border-radius: 8px; 
+            padding: 6px; 
+            background: white; 
+            position: relative; 
+            cursor: grab; 
+            transition: transform 0.15s, border-color 0.2s, box-shadow 0.2s; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            user-select: none;
+            touch-action: pan-y;
+        }
+        .card-thumb:active { cursor: grabbing; }
+        .card-thumb:hover { border-color: var(--primary); }
+        .card-thumb.active { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2); }
+        
+        /* Efectos visuales de arrastre (Drag and Drop) */
+        .card-thumb.dragging { opacity: 0.4; transform: scale(0.96); }
+        .card-thumb.drag-over { border: 2px dashed var(--primary); background: #eef2ff; }
+
+        .card-thumb img { width: 100%; height: 65px; object-fit: cover; border-radius: 4px; pointer-events: none; }
+        
+        /* Botones de control en tarjetas */
+        .card-controls { display: flex; gap: 4px; margin-top: 6px; width: 100%; justify-content: space-between; }
+        .card-controls .btn-mini { 
+            flex: 1;
+            padding: 5px 0; 
+            font-size: 0.85rem; 
+            font-weight: 700;
+            border-radius: 4px; 
+            border: 1px solid #cbd5e1; 
+            background: #f1f5f9; 
+            color: #1e293b !important;
+            cursor: pointer; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            touch-action: manipulation;
+            transition: 0.15s;
+        }
+        .card-controls .btn-mini:hover { background: #e2e8f0; border-color: #94a3b8; }
+        .card-controls .btn-mini.btn-mini-del { background: #fee2e2; border-color: #fca5a5; color: #dc2626 !important; }
+        .card-controls .btn-mini.btn-mini-del:hover { background: #fecaca; }
+
+        textarea { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; margin: 6px 0; resize: vertical; box-sizing: border-box; font-family: inherit; }
+        textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15); }
+
+        .checkbox-group { margin: 4px 0 10px 0; display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; color: #475569; cursor: pointer; }
+
+        .tools-bar { display: flex; gap: 8px; margin-bottom: 12px; background: #f1f5f9; padding: 10px; border-radius: 10px; align-items: center; flex-wrap: wrap; }
+        .tools-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; width: 100%; }
+        
+        .tool-btn { background: white; border: 1px solid var(--border-color); padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; color: #334155; transition: 0.2s; touch-action: manipulation; }
+        .tool-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .tool-btn.btn-danger { color: var(--danger); border-color: #fca5a5; }
+
+        .color-picker-container { display: flex; align-items: center; gap: 6px; font-size: 0.85rem; font-weight: 600; color: #334155; margin-left: auto; }
+        .color-picker-container input[type="color"] { border: none; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; background: none; }
+
+        .button-group { display: flex; gap: 10px; margin-top: 12px; }
+
+        button { padding: 10px 14px; border: none; border-radius: 8px; font-size: 0.95rem; font-weight: 600; cursor: pointer; color: white; transition: 0.2s; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-download { background: var(--primary); flex: 1; padding: 12px; }
+        .btn-download:hover:not(:disabled) { background: var(--primary-hover); }
+        .btn-copy { background: var(--secondary); flex: 1; padding: 12px; }
+        .btn-copy:hover:not(:disabled) { background: var(--secondary-hover); }
+        
+        .btn-action-col { background: white; border: 1px solid var(--border-color); color: #334155; font-size: 0.8rem; padding: 5px 10px; }
+        .btn-action-col:hover:not(:disabled) { background: #f1f5f9; }
+        .btn-delete-all { background: #fee2e2; border: 1px solid #fca5a5; color: var(--danger); font-size: 0.8rem; padding: 5px 10px; }
+        .btn-delete-all:hover:not(:disabled) { background: #fecaca; }
+
+        .result-card { border: 2px solid var(--border-color); padding: 15px; border-radius: 16px; background: #ffffff; margin-top: 15px; text-align: left; }
+        
+        .canvas-container { 
+            position: relative; 
+            width: 100%; 
+            overflow: hidden; 
+            border-radius: 8px; 
+            cursor: crosshair; 
+            touch-action: none;
+        }
+        #preview-img-display { width: 100%; display: block; border-radius: 8px; user-select: none; }
+        
+        #overlayCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: auto; touch-action: none; }
+
+        .separator { height: 2px; background: var(--border-color); margin: 15px 0; border-radius: 2px; }
+
+        #preview-text-display { font-size: 1.1rem; color: #334155; font-weight: 600; margin-bottom: 6px; word-break: break-word; }
+        #preview-indications-display { font-size: 0.95rem; color: #64748b; white-space: pre-wrap; word-break: break-word; line-height: 1.5; }
+        
+        #hiddenCanvas { display: none; }
+        #toast { position: fixed; bottom: 20px; right: 20px; background: #1e293b; color: white; padding: 10px 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); display: none; font-size: 0.9rem; z-index: 1000; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🎨 Creador con Figuras, Flechas y Colección</h2>
+    
+    <div class="drop-zone" id="dropZone" tabindex="0">
+        Toca para subir o usa <b>Ctrl + V</b> para pegar imágenes
+    </div>
+    <input type="file" id="fileInput" accept="image/*" multiple hidden>
+
+    <!-- Barra de Colección -->
+    <div class="collection-section" id="collectionSection" style="display:none;">
+        <div class="collection-header">
+            <span class="collection-title">📂 Colección (<span id="colCount">0</span>) - <i>Arrastra las tarjetas para reordenar</i></span>
+            <div class="collection-actions">
+                <button class="btn-action-col" id="dlAllEditedBtn">📥 Descargar Editadas (.zip)</button>
+                <button class="btn-action-col" id="dlAllOriginalBtn">📥 Descargar Originales (.zip)</button>
+                <button class="btn-delete-all" id="clearCollectionBtn">🗑️ Vaciar Colección</button>
+            </div>
+        </div>
+        <div class="gallery-grid" id="galleryGrid"></div>
+    </div>
+
+    <!-- Herramientas de Edición -->
+    <div id="editorArea" style="display:none;">
+        <div class="tools-bar" id="toolsBar">
+            <div class="tools-row">
+                <button class="tool-btn active" data-tool="arrow">➡️ Flecha</button>
+                <button class="tool-btn" data-tool="circle">⭕ Elipse</button>
+                <button class="tool-btn" data-tool="number">🔢 Número</button>
+                <button class="tool-btn btn-danger" id="undoBtn">↩️ Deshacer</button>
+                <button class="tool-btn btn-danger" id="clearBtn">🗑️ Borrar Trazos</button>
+                
+                <div class="color-picker-container">
+                    Color: <input type="color" id="colorPicker" value="#ef4444">
+                </div>
+            </div>
+            
+            <div class="tools-row" style="margin-top: 4px; padding-top: 4px; border-top: 1px dashed var(--border-color);">
+                <label class="checkbox-group" title="Agrega una insignia numérica a las flechas y elipses">
+                    <input type="checkbox" id="autoNumberShapesCheck" checked> Numerar figuras (flechas / elipses)
+                </label>
+                <label class="checkbox-group" title="Genera el listado 1, 2, 3 en las notas automáticamente" style="margin-left: 12px;">
+                    <input type="checkbox" id="autoInstructionsCheck" checked> Numeración automática en notas
+                </label>
+            </div>
+        </div>
+        
+        <textarea id="textInput" placeholder="Descripción principal..."></textarea>
+        <label class="checkbox-group"><input type="checkbox" id="bulletCheck"> Agregar punto decorativo (•) al inicio del título</label>
+        
+        <textarea id="indicationsInput" rows="3" placeholder="Escribe tus notas / indicaciones..."></textarea>
+        
+        <div class="button-group">
+            <button id="downloadBtn" class="btn-download">📥 Descargar Esta Imagen</button>
+            <button id="copyBtn" class="btn-copy">📋 Copiar Imagen</button>
+        </div>
+
+        <div id="resultBox" class="result-card">
+            <div class="canvas-container" id="canvasContainer">
+                <img id="preview-img-display" alt="Vista previa">
+                <canvas id="overlayCanvas"></canvas>
+            </div>
+            <div class="separator"></div>
+            <div id="preview-text-display"></div>
+            <div id="preview-indications-display"></div>
+        </div>
+    </div>
+    
+    <canvas id="hiddenCanvas"></canvas>
+</div>
+
+<div id="toast">¡Notificación!</div>
+
+<script>
+    const fileInput = document.getElementById('fileInput'),
+          textInput = document.getElementById('textInput'),
+          bulletCheck = document.getElementById('bulletCheck'),
+          indicationsInput = document.getElementById('indicationsInput'),
+          autoNumberShapesCheck = document.getElementById('autoNumberShapesCheck'),
+          autoInstructionsCheck = document.getElementById('autoInstructionsCheck'),
+          dropZone = document.getElementById('dropZone'),
+          editorArea = document.getElementById('editorArea'),
+          resultBox = document.getElementById('resultBox'),
+          previewImg = document.getElementById('preview-img-display'),
+          overlayCanvas = document.getElementById('overlayCanvas'),
+          previewText = document.getElementById('preview-text-display'),
+          previewIndications = document.getElementById('preview-indications-display'),
+          hiddenCanvas = document.getElementById('hiddenCanvas'),
+          downloadBtn = document.getElementById('downloadBtn'),
+          copyBtn = document.getElementById('copyBtn'),
+          colorPicker = document.getElementById('colorPicker'),
+          toast = document.getElementById('toast'),
+          collectionSection = document.getElementById('collectionSection'),
+          galleryGrid = document.getElementById('galleryGrid'),
+          colCount = document.getElementById('colCount'),
+          dlAllEditedBtn = document.getElementById('dlAllEditedBtn'),
+          dlAllOriginalBtn = document.getElementById('dlAllOriginalBtn'),
+          clearCollectionBtn = document.getElementById('clearCollectionBtn');
+
+    let collection = [];
+    let currentIndex = -1;
+
+    let currentTool = 'arrow';
+    let isDrawing = false;
+    let startX, startY;
+
+    // Variables de Drag & Drop
+    let draggedIndex = null;
+    let touchDragEl = null;
+
+    window.onload = () => dropZone.focus();
+    dropZone.onclick = () => fileInput.click();
+
+    fileInput.onchange = (e) => {
+        if (e.target.files && e.target.files.length > 0) {
+            Array.from(e.target.files).forEach(addFileToCollection);
+            fileInput.value = '';
+        }
+    };
+    
+    window.addEventListener('paste', (e) => {
+        const items = e.clipboardData || e.originalEvent.clipboardData;
+        if (!items) return;
+        for (let i = 0; i < items.items.length; i++) {
+            if (items.items[i].type.indexOf('image') !== -1) {
+                addFileToCollection(items.items[i].getAsFile());
+            }
+        }
+    });
+
+    function showToast(msg) {
+        toast.innerText = msg;
+        toast.style.display = 'block';
+        setTimeout(() => { toast.style.display = 'none'; }, 2500);
+    }
+
+    function addFileToCollection(file) {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const newItem = {
+                id: Date.now() + Math.random(),
+                dataUrl: e.target.result,
+                title: '',
+                bullet: false,
+                indications: '',
+                annotations: [],
+                numberCounter: 1
+            };
+            collection.push(newItem);
+            renderCollectionUI();
+            if (currentIndex === -1) selectItem(0);
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function renderCollectionUI() {
+        if (collection.length === 0) {
+            collectionSection.style.display = 'none';
+            editorArea.style.display = 'none';
+            currentIndex = -1;
+            return;
+        }
+        collectionSection.style.display = 'block';
+        colCount.innerText = collection.length;
+        galleryGrid.innerHTML = '';
+
+        collection.forEach((item, index) => {
+            const card = document.createElement('div');
+            card.className = `card-thumb ${index === currentIndex ? 'active' : ''}`;
+            card.draggable = true;
+            card.dataset.index = index;
+
+            card.onclick = () => selectItem(index);
+
+            // Drag and Drop (Mouse / Desktop)
+            card.ondragstart = (e) => {
+                draggedIndex = index;
+                card.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+            };
+
+            card.ondragend = () => {
+                card.classList.remove('dragging');
+                document.querySelectorAll('.card-thumb').forEach(c => c.classList.remove('drag-over'));
+            };
+
+            card.ondragover = (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                card.classList.add('drag-over');
+            };
+
+            card.ondragleave = () => {
+                card.classList.remove('drag-over');
+            };
+
+            card.ondrop = (e) => {
+                e.preventDefault();
+                card.classList.remove('drag-over');
+                if (draggedIndex !== null && draggedIndex !== index) {
+                    reorderCollection(draggedIndex, index);
+                }
+            };
+
+            // Drag and Drop Touch (Móvil / Tablets)
+            let touchTimer = null;
+            card.ontouchstart = (e) => {
+                if (e.target.closest('.card-controls')) return;
+                touchTimer = setTimeout(() => {
+                    touchDragEl = card;
+                    draggedIndex = index;
+                    card.classList.add('dragging');
+                }, 180);
+            };
+
+            card.ontouchmove = (e) => {
+                if (!touchDragEl) {
+                    clearTimeout(touchTimer);
+                    return;
+                }
+                e.preventDefault();
+                const touch = e.touches[0];
+                const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
+                const overCard = targetEl ? targetEl.closest('.card-thumb') : null;
+
+                document.querySelectorAll('.card-thumb').forEach(c => c.classList.remove('drag-over'));
+                if (overCard && overCard !== touchDragEl) {
+                    overCard.classList.add('drag-over');
+                }
+            };
+
+            card.ontouchend = (e) => {
+                clearTimeout(touchTimer);
+                if (touchDragEl) {
+                    const touch = e.changedTouches[0];
+                    const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
+                    const overCard = targetEl ? targetEl.closest('.card-thumb') : null;
+
+                    if (overCard && draggedIndex !== null) {
+                        const targetIndex = parseInt(overCard.dataset.index, 10);
+                        if (targetIndex !== draggedIndex) {
+                            reorderCollection(draggedIndex, targetIndex);
+                        }
+                    }
+                    touchDragEl.classList.remove('dragging');
+                    touchDragEl = null;
+                    draggedIndex = null;
+                    document.querySelectorAll('.card-thumb').forEach(c => c.classList.remove('drag-over'));
+                }
+            };
+
+            const img = document.createElement('img');
+            img.src = item.dataUrl;
+
+            const controls = document.createElement('div');
+            controls.className = 'card-controls';
+            controls.onclick = (e) => e.stopPropagation();
+
+            const btnLeft = document.createElement('button');
+            btnLeft.className = 'btn-mini';
+            btnLeft.innerHTML = '&#9664;';
+            btnLeft.title = 'Mover hacia atrás';
+            btnLeft.onclick = () => moveItem(index, -1);
+
+            const btnRight = document.createElement('button');
+            btnRight.className = 'btn-mini';
+            btnRight.innerHTML = '&#9654;';
+            btnRight.title = 'Mover hacia adelante';
+            btnRight.onclick = () => moveItem(index, 1);
+
+            const btnDel = document.createElement('button');
+            btnDel.className = 'btn-mini btn-mini-del';
+            btnDel.innerHTML = '&#128465;';
+            btnDel.title = 'Eliminar imagen';
+            btnDel.onclick = () => deleteItem(index);
+
+            controls.appendChild(btnLeft);
+            controls.appendChild(btnRight);
+            controls.appendChild(btnDel);
+
+            card.appendChild(img);
+            card.appendChild(controls);
+            galleryGrid.appendChild(card);
+        });
+    }
+
+    function reorderCollection(fromIndex, toIndex) {
+        saveCurrentEditorState();
+        const item = collection.splice(fromIndex, 1)[0];
+        collection.splice(toIndex, 0, item);
+        currentIndex = toIndex;
+        renderCollectionUI();
+        loadItemIntoEditor(collection[currentIndex]);
+    }
+
+    function selectItem(index) {
+        if (index < 0 || index >= collection.length) return;
+        saveCurrentEditorState();
+        currentIndex = index;
+        loadItemIntoEditor(collection[currentIndex]);
+        renderCollectionUI();
+    }
+
+    function moveItem(index, step) {
+        const targetIndex = index + step;
+        if (targetIndex < 0 || targetIndex >= collection.length) return;
+        reorderCollection(index, targetIndex);
+    }
+
+    function deleteItem(index) {
+        collection.splice(index, 1);
+        if (collection.length === 0) {
+            currentIndex = -1;
+            renderCollectionUI();
+        } else {
+            currentIndex = Math.max(0, Math.min(currentIndex, collection.length - 1));
+            loadItemIntoEditor(collection[currentIndex]);
+            renderCollectionUI();
+        }
+    }
+
+    clearCollectionBtn.onclick = () => {
+        if (confirm("¿Estás seguro de eliminar toda la colección local?")) {
+            collection = [];
+            currentIndex = -1;
+            renderCollectionUI();
+        }
+    };
+
+    function saveCurrentEditorState() {
+        if (currentIndex < 0 || !collection[currentIndex]) return;
+        collection[currentIndex].title = textInput.value;
+        collection[currentIndex].bullet = bulletCheck.checked;
+        collection[currentIndex].indications = indicationsInput.value;
+    }
+
+    function loadItemIntoEditor(item) {
+        editorArea.style.display = 'block';
+        textInput.value = item.title;
+        bulletCheck.checked = item.bullet;
+        indicationsInput.value = item.indications;
+        previewImg.src = item.dataUrl;
+
+        previewImg.onload = () => {
+            setupOverlay();
+            updatePreview();
+        };
+    }
+
+    function setupOverlay() {
+        overlayCanvas.width = previewImg.clientWidth;
+        overlayCanvas.height = previewImg.clientHeight;
+        redrawOverlay();
+    }
+
+    window.onresize = () => {
+        if (previewImg.complete && previewImg.clientWidth > 0) setupOverlay();
+    };
+
+    document.querySelectorAll('.tool-btn[data-tool]').forEach(btn => {
+        btn.onclick = () => {
+            document.querySelectorAll('.tool-btn[data-tool]').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentTool = btn.dataset.tool;
+        };
+    });
+
+    document.getElementById('undoBtn').onclick = () => {
+        if (currentIndex === -1) return;
+        const item = collection[currentIndex];
+        const removed = item.annotations.pop();
+        if (removed && (removed.type === 'number' || removed.number)) {
+            item.numberCounter = Math.max(1, item.numberCounter - 1);
+        }
+        redrawOverlay();
+        autoFormatIndications();
+    };
+
+    document.getElementById('clearBtn').onclick = () => {
+        if (currentIndex === -1) return;
+        const item = collection[currentIndex];
+        item.annotations = [];
+        item.numberCounter = 1;
+        redrawOverlay();
+        autoFormatIndications();
+    };
+
+    function getPointerPos(e) {
+        const rect = overlayCanvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return {
+            x: clientX - rect.left,
+            y: clientY - rect.top
+        };
+    }
+
+    function handleStart(e) {
+        if (currentIndex === -1) return;
+        const pos = getPointerPos(e);
+        startX = pos.x;
+        startY = pos.y;
+
+        const item = collection[currentIndex];
+        if (currentTool === 'number') {
+            item.annotations.push({ 
+                type: 'number', 
+                startX, 
+                startY, 
+                number: item.numberCounter, 
+                color: colorPicker.value 
+            });
+            item.numberCounter++;
+            redrawOverlay();
+            autoFormatIndications();
+        } else {
+            isDrawing = true;
+        }
+    }
+
+    function handleMove(e) {
+        if (!isDrawing || currentTool === 'number' || currentIndex === -1) return;
+        if (e.cancelable) e.preventDefault();
+        
+        const pos = getPointerPos(e);
+        redrawOverlay();
+        
+        const numToPreview = autoNumberShapesCheck.checked ? collection[currentIndex].numberCounter : null;
+        drawShape(overlayCanvas.getContext('2d'), startX, startY, pos.x, pos.y, currentTool, colorPicker.value, 4, 1, numToPreview);
+    }
+
+    function handleEnd(e) {
+        if (!isDrawing || currentTool === 'number' || currentIndex === -1) return;
+        isDrawing = false;
+        
+        let endX = startX;
+        let endY = startY;
+        if (e.changedTouches && e.changedTouches[0]) {
+            const rect = overlayCanvas.getBoundingClientRect();
+            endX = e.changedTouches[0].clientX - rect.left;
+            endY = e.changedTouches[0].clientY - rect.top;
+        }
+
+        const item = collection[currentIndex];
+        if (Math.abs(endX - startX) > 6 || Math.abs(endY - startY) > 6) {
+            let assignedNum = null;
+            if (autoNumberShapesCheck.checked) {
+                assignedNum = item.numberCounter;
+                item.numberCounter++;
+            }
+            item.annotations.push({ 
+                type: currentTool, 
+                startX, 
+                startY, 
+                endX, 
+                endY, 
+                color: colorPicker.value,
+                number: assignedNum
+            });
+            autoFormatIndications();
+        }
+        redrawOverlay();
+    }
+
+    // Eventos Mouse Canvas
+    overlayCanvas.addEventListener('mousedown', handleStart);
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleEnd);
+
+    // Eventos Touch Canvas
+    overlayCanvas.addEventListener('touchstart', (e) => { e.preventDefault(); handleStart(e); }, { passive: false });
+    window.addEventListener('touchmove', handleMove, { passive: false });
+    window.addEventListener('touchend', handleEnd);
+
+    function autoFormatIndications() {
+        if (!autoInstructionsCheck.checked || currentIndex === -1) return;
+        const item = collection[currentIndex];
+        
+        const numberedItems = item.annotations.filter(a => a.type === 'number' || a.number);
+        if (numberedItems.length === 0) return;
+        
+        let currentText = indicationsInput.value.trim();
+        if (!currentText || /^\d+\s*\.-\s*/.test(currentText)) {
+            let generatedLines = numberedItems.map((n) => {
+                const num = n.number;
+                return `${num} .- `;
+            }).join("\n");
+            
+            indicationsInput.value = generatedLines;
+            item.indications = generatedLines;
+            updatePreview();
+        }
+    }
+
+    function redrawOverlay() {
+        const ctx = overlayCanvas.getContext('2d');
+        ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+        if (currentIndex === -1) return;
+        
+        collection[currentIndex].annotations.forEach(item => {
+            if (item.type === 'number') {
+                drawNumber(ctx, item.startX, item.startY, item.number, item.color, 1);
+            } else {
+                drawShape(ctx, item.startX, item.startY, item.endX, item.endY, item.type, item.color, 4, 1, item.number);
+            }
+        });
+    }
+
+    function drawNumber(ctx, x, y, num, color, scale) {
+        const radius = 15 * scale;
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, 2 * Math.PI);
+        ctx.fillStyle = color;
+        ctx.fill();
+        ctx.lineWidth = 2 * scale;
+        ctx.strokeStyle = '#ffffff';
+        ctx.stroke();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `bold ${Math.round(15 * scale)}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(num, x, y);
+    }
+
+    function drawShape(ctx, x1, y1, x2, y2, type, color, lineWidth, scale, badgeNumber = null) {
+        ctx.strokeStyle = color;
+        ctx.fillStyle = color;
+        ctx.lineWidth = lineWidth * scale;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        if (type === 'arrow') {
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+
+            const angle = Math.atan2(y2 - y1, x2 - x1);
+            const headLength = 18 * scale;
+            ctx.beginPath();
+            ctx.moveTo(x2, y2);
+            ctx.lineTo(x2 - headLength * Math.cos(angle - Math.PI / 6), y2 - headLength * Math.sin(angle - Math.PI / 6));
+            ctx.lineTo(x2 - headLength * Math.cos(angle + Math.PI / 6), y2 - headLength * Math.sin(angle + Math.PI / 6));
+            ctx.lineTo(x2, y2);
+            ctx.fill();
+
+            if (badgeNumber !== null && badgeNumber !== undefined) {
+                drawNumber(ctx, x1, y1, badgeNumber, color, scale);
+            }
+        } else if (type === 'circle') {
+            const centerX = (x1 + x2) / 2;
+            const centerY = (y1 + y2) / 2;
+            const radiusX = Math.abs(x2 - x1) / 2;
+            const radiusY = Math.abs(y2 - y1) / 2;
+
+            ctx.beginPath();
+            ctx.ellipse(centerX, centerY, Math.max(1, radiusX), Math.max(1, radiusY), 0, 0, 2 * Math.PI);
+            ctx.stroke();
+
+            if (badgeNumber !== null && badgeNumber !== undefined) {
+                const badgeY = centerY - radiusY;
+                drawNumber(ctx, centerX, badgeY, badgeNumber, color, scale);
+            }
+        }
+    }
+
+    function updatePreview() {
+        const txt = textInput.value.trim();
+        previewText.innerText = bulletCheck.checked ? "• " + txt : txt;
+        
+        const ind = indicationsInput.value.trim();
+        previewIndications.innerText = ind ? ind : "";
+    }
+
+    textInput.oninput = () => { saveCurrentEditorState(); updatePreview(); };
+    bulletCheck.onchange = () => { saveCurrentEditorState(); updatePreview(); };
+    indicationsInput.oninput = () => { saveCurrentEditorState(); updatePreview(); };
+
+    function renderItemToCanvas(item) {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.src = item.dataUrl;
+            img.onload = () => {
+                const c = document.createElement('canvas');
+                const ctx = c.getContext('2d');
+                
+                const textStr = item.bullet ? (item.title ? `• ${item.title}` : '') : item.title;
+                const indLines = (item.indications || '').trim().split('\n').filter(l => l.trim() !== '');
+                
+                let extraHeight = 80 + (indLines.length * 35);
+                if (textStr) extraHeight += 45;
+
+                c.width = img.width;
+                c.height = img.height + extraHeight;
+                
+                ctx.fillStyle = "white"; 
+                ctx.fillRect(0, 0, c.width, c.height);
+                ctx.drawImage(img, 0, 0);
+
+                const scaleX = img.width / (overlayCanvas.width || img.width);
+                const scaleY = img.height / (overlayCanvas.height || img.height);
+                const avgScale = (scaleX + scaleY) / 2;
+
+                item.annotations.forEach(an => {
+                    if (an.type === 'number') {
+                        drawNumber(ctx, an.startX * scaleX, an.startY * scaleY, an.number, an.color, avgScale);
+                    } else {
+                        drawShape(ctx, an.startX * scaleX, an.startY * scaleY, an.endX * scaleX, an.endY * scaleY, an.type, an.color, 4, avgScale, an.number);
+                    }
+                });
+                
+                ctx.strokeStyle = "#e2e8f0"; 
+                ctx.lineWidth = 4;
+                ctx.beginPath(); 
+                ctx.moveTo(35, img.height + 35); 
+                ctx.lineTo(c.width - 35, img.height + 35); 
+                ctx.stroke();
+
+                let currentY = img.height + 85;
+
+                if (textStr) {
+                    ctx.fillStyle = "#334155";
+                    ctx.font = "bold 32px sans-serif";
+                    ctx.fillText(textStr, 35, currentY);
+                    currentY += 50;
+                }
+                
+                ctx.font = "26px sans-serif";
+                indLines.forEach(line => {
+                    ctx.fillStyle = "#64748b";
+                    ctx.fillText(line, 35, currentY);
+                    currentY += 38;
+                });
+
+                resolve(c);
+            };
+        });
+    }
+
+    downloadBtn.onclick = async () => {
+        if (currentIndex === -1) return;
+        saveCurrentEditorState();
+        const canvas = await renderItemToCanvas(collection[currentIndex]);
+        const link = document.createElement('a');
+        link.download = `imagen_editada_${currentIndex + 1}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    };
+
+    copyBtn.onclick = async () => {
+        if (currentIndex === -1) return;
+        saveCurrentEditorState();
+        try {
+            const canvas = await renderItemToCanvas(collection[currentIndex]);
+            canvas.toBlob(async (blob) => {
+                await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+                showToast("¡Imagen copiada al portapapeles!");
+            });
+        } catch (err) { 
+            alert("No se pudo copiar directamente al portapapeles en este dispositivo."); 
+        }
+    };
+
+    // Descarga masiva ZIP - Editadas
+    dlAllEditedBtn.onclick = async () => {
+        saveCurrentEditorState();
+        if (collection.length === 0) return;
+        const zip = new JSZip();
+        showToast("Generando ZIP de imágenes editadas...");
+
+        for (let i = 0; i < collection.length; i++) {
+            const canvas = await renderItemToCanvas(collection[i]);
+            const base64Data = canvas.toDataURL('image/png').split(',')[1];
+            zip.file(`editada_${i + 1}.png`, base64Data, { base64: true });
+        }
+
+        const content = await zip.generateAsync({ type: "blob" });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(content);
+        link.download = "coleccion_editadas.zip";
+        link.click();
+    };
+
+    // Descarga masiva ZIP - Originales
+    dlAllOriginalBtn.onclick = async () => {
+        if (collection.length === 0) return;
+        const zip = new JSZip();
+        showToast("Generando ZIP de imágenes originales...");
+
+        for (let i = 0; i < collection.length; i++) {
+            const base64Data = collection[i].dataUrl.split(',')[1];
+            const ext = collection[i].dataUrl.substring("data:image/".length, collection[i].dataUrl.indexOf(";base64")) || 'png';
+            zip.file(`original_${i + 1}.${ext}`, base64Data, { base64: true });
+        }
+
+        const content = await zip.generateAsync({ type: "blob" });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(content);
+        link.download = "coleccion_originales.zip";
+        link.click();
+    };
+</script>
+</body>
+</html>
