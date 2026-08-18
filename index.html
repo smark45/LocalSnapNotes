@@ -521,7 +521,6 @@
         autoFormatIndications();
     };
 
-    // Coordenadas unificadas con Pointer Events (Mouse, Touch y Stylus)
     function getPointerPos(e) {
         const rect = overlayCanvas.getBoundingClientRect();
         return {
@@ -711,6 +710,26 @@
     bulletCheck.onchange = () => { saveCurrentEditorState(); updatePreview(); };
     indicationsInput.oninput = () => { saveCurrentEditorState(); updatePreview(); };
 
+    // Función auxiliar para partir líneas largas y evitar que el texto se corte
+    function wrapText(ctx, text, maxWidth) {
+        const words = text.split(' ');
+        const lines = [];
+        let currentLine = words[0] || '';
+
+        for (let i = 1; i < words.length; i++) {
+            const word = words[i];
+            const width = ctx.measureText(currentLine + ' ' + word).width;
+            if (width < maxWidth) {
+                currentLine += ' ' + word;
+            } else {
+                lines.push(currentLine);
+                currentLine = word;
+            }
+        }
+        if (currentLine) lines.push(currentLine);
+        return lines;
+    }
+
     function renderItemToCanvas(item) {
         return new Promise((resolve) => {
             const img = new Image();
@@ -719,19 +738,52 @@
                 const c = document.createElement('canvas');
                 const ctx = c.getContext('2d');
 
-                const textStr = item.bullet ? (item.title ? `• ${item.title}` : '') : item.title;
-                const indLines = (item.indications || '').trim().split('\n').filter(l => l.trim() !== '');
+                // Escala tipográfica relativa a la anchura de la imagen (mínimo 16px, estándar escalable)
+                const baseScale = Math.max(0.6, img.width / 800);
+                const titleFontSize = Math.round(22 * baseScale);
+                const bodyFontSize = Math.round(18 * baseScale);
+                const padding = Math.round(30 * baseScale);
+                const maxTextWidth = Math.max(100, img.width - (padding * 2));
+                const lineHeightTitle = Math.round(titleFontSize * 1.35);
+                const lineHeightBody = Math.round(bodyFontSize * 1.4);
 
-                let extraHeight = 80 + (indLines.length * 35);
-                if (textStr) extraHeight += 45;
+                const textStr = item.bullet ? (item.title ? `• ${item.title}` : '') : item.title;
+                const rawIndLines = (item.indications || '').trim().split('\n').filter(l => l.trim() !== '');
+
+                // Medir líneas de título con word-wrap
+                ctx.font = `bold ${titleFontSize}px "Segoe UI", sans-serif`;
+                let titleLines = [];
+                if (textStr) {
+                    titleLines = wrapText(ctx, textStr, maxTextWidth);
+                }
+
+                // Medir líneas de indicaciones con word-wrap
+                ctx.font = `${bodyFontSize}px "Segoe UI", sans-serif`;
+                let bodyLines = [];
+                rawIndLines.forEach(rawLine => {
+                    const wrapped = wrapText(ctx, rawLine, maxTextWidth);
+                    bodyLines.push(...wrapped);
+                });
+
+                // Calcular altura dinámica exacta
+                let textBlockHeight = padding; // Espacio superior del texto
+                if (titleLines.length > 0) {
+                    textBlockHeight += (titleLines.length * lineHeightTitle) + Math.round(10 * baseScale);
+                }
+                if (bodyLines.length > 0) {
+                    textBlockHeight += (bodyLines.length * lineHeightBody);
+                }
+                textBlockHeight += padding; // Margen inferior de seguridad
 
                 c.width = img.width;
-                c.height = img.height + extraHeight;
+                c.height = img.height + textBlockHeight;
 
-                ctx.fillStyle = "white"; 
+                // Fondo blanco
+                ctx.fillStyle = "white";
                 ctx.fillRect(0, 0, c.width, c.height);
                 ctx.drawImage(img, 0, 0);
 
+                // Dibujar anotaciones escaladas proporcionalmente
                 const scaleX = img.width / (overlayCanvas.width || img.width);
                 const scaleY = img.height / (overlayCanvas.height || img.height);
                 const avgScale = (scaleX + scaleY) / 2;
@@ -744,28 +796,37 @@
                     }
                 });
 
-                ctx.strokeStyle = "#e2e8f0"; 
-                ctx.lineWidth = 4;
-                ctx.beginPath(); 
-                ctx.moveTo(35, img.height + 35); 
-                ctx.lineTo(c.width - 35, img.height + 35); 
+                // Línea separadora decorativa
+                ctx.strokeStyle = "#e2e8f0";
+                ctx.lineWidth = Math.max(2, Math.round(3 * baseScale));
+                ctx.beginPath();
+                ctx.moveTo(padding, img.height + Math.round(padding / 2));
+                ctx.lineTo(c.width - padding, img.height + Math.round(padding / 2));
                 ctx.stroke();
 
-                let currentY = img.height + 85;
+                let currentY = img.height + padding + titleFontSize;
+                ctx.textBaseline = "alphabetic";
 
-                if (textStr) {
+                // Renderizar Título
+                if (titleLines.length > 0) {
+                    ctx.font = `bold ${titleFontSize}px "Segoe UI", sans-serif`;
                     ctx.fillStyle = "#334155";
-                    ctx.font = "bold 32px sans-serif";
-                    ctx.fillText(textStr, 35, currentY);
-                    currentY += 50;
+                    titleLines.forEach(line => {
+                        ctx.fillText(line, padding, currentY);
+                        currentY += lineHeightTitle;
+                    });
+                    currentY += Math.round(6 * baseScale);
                 }
 
-                ctx.font = "26px sans-serif";
-                indLines.forEach(line => {
+                // Renderizar Indicaciones
+                if (bodyLines.length > 0) {
+                    ctx.font = `${bodyFontSize}px "Segoe UI", sans-serif`;
                     ctx.fillStyle = "#64748b";
-                    ctx.fillText(line, 35, currentY);
-                    currentY += 38;
-                });
+                    bodyLines.forEach(line => {
+                        ctx.fillText(line, padding, currentY);
+                        currentY += lineHeightBody;
+                    });
+                }
 
                 resolve(c);
             };
