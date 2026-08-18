@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Creador de Imagen con Colecciones e Indicadores</title>
-    <!-- JSZip para empaquetar descargas de la colección completa -->
+    <title>DocuSnap - Anotador y Colecciones</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         :root {
@@ -17,7 +16,7 @@
             --border-color: #e2e8f0;
         }
 
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-body); padding: 15px; display: flex; justify-content: center; margin: 0; }
+        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg-body); padding: 15px; display: flex; justify-content: center; margin: 0; }
         .container { max-width: 850px; width: 100%; background: white; padding: 25px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); box-sizing: border-box; }
 
         h2 { color: #1e293b; margin-top: 0; font-size: 1.4rem; }
@@ -25,7 +24,6 @@
         .drop-zone { border: 2px dashed var(--primary); padding: 20px; text-align: center; border-radius: 12px; cursor: pointer; color: var(--primary); margin-bottom: 15px; transition: 0.3s; outline: none; }
         .drop-zone:hover { background: #eef2ff; }
 
-        /* Colección UI */
         .collection-section { background: #f8fafc; border: 1px solid var(--border-color); border-radius: 12px; padding: 12px; margin-bottom: 15px; }
         .collection-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px; }
         .collection-title { font-weight: 700; color: #334155; font-size: 0.95rem; }
@@ -50,14 +48,10 @@
         .card-thumb:active { cursor: grabbing; }
         .card-thumb:hover { border-color: var(--primary); }
         .card-thumb.active { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2); }
-
-        /* Efectos visuales de arrastre (Drag and Drop) */
         .card-thumb.dragging { opacity: 0.4; transform: scale(0.96); }
         .card-thumb.drag-over { border: 2px dashed var(--primary); background: #eef2ff; }
-
         .card-thumb img { width: 100%; height: 65px; object-fit: cover; border-radius: 4px; pointer-events: none; }
 
-        /* Botones de control en tarjetas */
         .card-controls { display: flex; gap: 4px; margin-top: 6px; width: 100%; justify-content: space-between; }
         .card-controls .btn-mini { 
             flex: 1;
@@ -108,7 +102,16 @@
         .btn-delete-all { background: #fee2e2; border: 1px solid #fca5a5; color: var(--danger); font-size: 0.8rem; padding: 5px 10px; }
         .btn-delete-all:hover:not(:disabled) { background: #fecaca; }
 
-        .result-card { border: 2px solid var(--border-color); padding: 15px; border-radius: 16px; background: #ffffff; margin-top: 15px; text-align: left; }
+        /* Contenedor Renderizado Final */
+        .result-card { 
+            border: 2px solid var(--border-color); 
+            padding: 20px; 
+            border-radius: 16px; 
+            background: #ffffff; 
+            margin-top: 15px; 
+            text-align: left; 
+            box-sizing: border-box;
+        }
 
         .canvas-container { 
             position: relative; 
@@ -119,15 +122,28 @@
             touch-action: none;
         }
         #preview-img-display { width: 100%; display: block; border-radius: 8px; user-select: none; }
-
         #overlayCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: auto; touch-action: none; }
 
-        .separator { height: 2px; background: var(--border-color); margin: 15px 0; border-radius: 2px; }
+        .separator { height: 2px; background: var(--border-color); margin: 18px 0; border-radius: 2px; }
 
-        #preview-text-display { font-size: 1.1rem; color: #334155; font-weight: 600; margin-bottom: 6px; word-break: break-word; }
-        #preview-indications-display { font-size: 0.95rem; color: #64748b; white-space: pre-wrap; word-break: break-word; line-height: 1.5; }
+        #preview-text-display { 
+            font-size: 1.15rem; 
+            color: #1e293b; 
+            font-weight: 700; 
+            margin-bottom: 8px; 
+            word-wrap: break-word; 
+            overflow-wrap: break-word;
+            line-height: 1.4;
+        }
+        #preview-indications-display { 
+            font-size: 1rem; 
+            color: #475569; 
+            white-space: pre-wrap; 
+            word-wrap: break-word;
+            overflow-wrap: break-word; 
+            line-height: 1.6; 
+        }
 
-        #hiddenCanvas { display: none; }
         #toast { position: fixed; bottom: 20px; right: 20px; background: #1e293b; color: white; padding: 10px 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); display: none; font-size: 0.9rem; z-index: 1000; }
     </style>
 </head>
@@ -170,10 +186,10 @@
             </div>
 
             <div class="tools-row" style="margin-top: 4px; padding-top: 4px; border-top: 1px dashed var(--border-color);">
-                <label class="checkbox-group" title="Agrega una insignia numérica a las flechas y elipses">
+                <label class="checkbox-group">
                     <input type="checkbox" id="autoNumberShapesCheck" checked> Numerar figuras (flechas / elipses)
                 </label>
-                <label class="checkbox-group" title="Genera el listado 1, 2, 3 en las notas automáticamente" style="margin-left: 12px;">
+                <label class="checkbox-group" style="margin-left: 12px;">
                     <input type="checkbox" id="autoInstructionsCheck" checked> Numeración automática en notas
                 </label>
             </div>
@@ -189,18 +205,17 @@
             <button id="copyBtn" class="btn-copy">📋 Copiar Imagen</button>
         </div>
 
+        <!-- Tarjeta que se exporta exactamente igual -->
         <div id="resultBox" class="result-card">
             <div class="canvas-container" id="canvasContainer">
                 <img id="preview-img-display" alt="Vista previa">
                 <canvas id="overlayCanvas"></canvas>
             </div>
-            <div class="separator"></div>
+            <div class="separator" id="previewSeparator"></div>
             <div id="preview-text-display"></div>
             <div id="preview-indications-display"></div>
         </div>
     </div>
-
-    <canvas id="hiddenCanvas"></canvas>
 </div>
 
 <div id="toast">¡Notificación!</div>
@@ -219,7 +234,7 @@
           overlayCanvas = document.getElementById('overlayCanvas'),
           previewText = document.getElementById('preview-text-display'),
           previewIndications = document.getElementById('preview-indications-display'),
-          hiddenCanvas = document.getElementById('hiddenCanvas'),
+          previewSeparator = document.getElementById('previewSeparator'),
           downloadBtn = document.getElementById('downloadBtn'),
           copyBtn = document.getElementById('copyBtn'),
           colorPicker = document.getElementById('colorPicker'),
@@ -239,7 +254,6 @@
     let startX, startY;
     let lastX, lastY;
 
-    // Variables de Drag & Drop
     let draggedIndex = null;
     let touchDragEl = null;
 
@@ -308,7 +322,6 @@
 
             card.onclick = () => selectItem(index);
 
-            // Drag and Drop (Mouse / Desktop)
             card.ondragstart = (e) => {
                 draggedIndex = index;
                 card.classList.add('dragging');
@@ -326,9 +339,7 @@
                 card.classList.add('drag-over');
             };
 
-            card.ondragleave = () => {
-                card.classList.remove('drag-over');
-            };
+            card.ondragleave = () => card.classList.remove('drag-over');
 
             card.ondrop = (e) => {
                 e.preventDefault();
@@ -338,7 +349,6 @@
                 }
             };
 
-            // Drag and Drop Touch (Móvil / Tablets)
             let touchTimer = null;
             card.ontouchstart = (e) => {
                 if (e.target.closest('.card-controls')) return;
@@ -700,135 +710,111 @@
 
     function updatePreview() {
         const txt = textInput.value.trim();
-        previewText.innerText = bulletCheck.checked ? "• " + txt : txt;
-
         const ind = indicationsInput.value.trim();
+
+        previewText.innerText = bulletCheck.checked ? (txt ? "• " + txt : "") : txt;
         previewIndications.innerText = ind ? ind : "";
+
+        // Ocultar separador si no hay texto
+        previewSeparator.style.display = (txt || ind) ? "block" : "none";
     }
 
     textInput.oninput = () => { saveCurrentEditorState(); updatePreview(); };
     bulletCheck.onchange = () => { saveCurrentEditorState(); updatePreview(); };
     indicationsInput.oninput = () => { saveCurrentEditorState(); updatePreview(); };
 
-    // Función auxiliar para partir líneas largas y evitar que el texto se corte
-    function wrapText(ctx, text, maxWidth) {
-        const words = text.split(' ');
-        const lines = [];
-        let currentLine = words[0] || '';
-
-        for (let i = 1; i < words.length; i++) {
-            const word = words[i];
-            const width = ctx.measureText(currentLine + ' ' + word).width;
-            if (width < maxWidth) {
-                currentLine += ' ' + word;
-            } else {
-                lines.push(currentLine);
-                currentLine = word;
-            }
-        }
-        if (currentLine) lines.push(currentLine);
-        return lines;
+    // Escape de caracteres especiales para XHTML en SVG
+    function escapeHtml(str) {
+        return (str || '')
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
     }
 
+    // Renderizador perfecto mediante HTML y Canvas Nativo
     function renderItemToCanvas(item) {
         return new Promise((resolve) => {
             const img = new Image();
             img.src = item.dataUrl;
             img.onload = () => {
-                const c = document.createElement('canvas');
-                const ctx = c.getContext('2d');
+                // 1. Crear canvas temporal para la imagen con las anotaciones en su resolución original
+                const imgCanvas = document.createElement('canvas');
+                imgCanvas.width = img.width;
+                imgCanvas.height = img.height;
+                const imgCtx = imgCanvas.getContext('2d');
+                imgCtx.drawImage(img, 0, 0);
 
-                // Escala tipográfica relativa a la anchura de la imagen (mínimo 16px, estándar escalable)
-                const baseScale = Math.max(0.6, img.width / 800);
-                const titleFontSize = Math.round(22 * baseScale);
-                const bodyFontSize = Math.round(18 * baseScale);
-                const padding = Math.round(30 * baseScale);
-                const maxTextWidth = Math.max(100, img.width - (padding * 2));
-                const lineHeightTitle = Math.round(titleFontSize * 1.35);
-                const lineHeightBody = Math.round(bodyFontSize * 1.4);
-
-                const textStr = item.bullet ? (item.title ? `• ${item.title}` : '') : item.title;
-                const rawIndLines = (item.indications || '').trim().split('\n').filter(l => l.trim() !== '');
-
-                // Medir líneas de título con word-wrap
-                ctx.font = `bold ${titleFontSize}px "Segoe UI", sans-serif`;
-                let titleLines = [];
-                if (textStr) {
-                    titleLines = wrapText(ctx, textStr, maxTextWidth);
-                }
-
-                // Medir líneas de indicaciones con word-wrap
-                ctx.font = `${bodyFontSize}px "Segoe UI", sans-serif`;
-                let bodyLines = [];
-                rawIndLines.forEach(rawLine => {
-                    const wrapped = wrapText(ctx, rawLine, maxTextWidth);
-                    bodyLines.push(...wrapped);
-                });
-
-                // Calcular altura dinámica exacta
-                let textBlockHeight = padding; // Espacio superior del texto
-                if (titleLines.length > 0) {
-                    textBlockHeight += (titleLines.length * lineHeightTitle) + Math.round(10 * baseScale);
-                }
-                if (bodyLines.length > 0) {
-                    textBlockHeight += (bodyLines.length * lineHeightBody);
-                }
-                textBlockHeight += padding; // Margen inferior de seguridad
-
-                c.width = img.width;
-                c.height = img.height + textBlockHeight;
-
-                // Fondo blanco
-                ctx.fillStyle = "white";
-                ctx.fillRect(0, 0, c.width, c.height);
-                ctx.drawImage(img, 0, 0);
-
-                // Dibujar anotaciones escaladas proporcionalmente
                 const scaleX = img.width / (overlayCanvas.width || img.width);
                 const scaleY = img.height / (overlayCanvas.height || img.height);
                 const avgScale = (scaleX + scaleY) / 2;
 
                 item.annotations.forEach(an => {
                     if (an.type === 'number') {
-                        drawNumber(ctx, an.startX * scaleX, an.startY * scaleY, an.number, an.color, avgScale);
+                        drawNumber(imgCtx, an.startX * scaleX, an.startY * scaleY, an.number, an.color, avgScale);
                     } else {
-                        drawShape(ctx, an.startX * scaleX, an.startY * scaleY, an.endX * scaleX, an.endY * scaleY, an.type, an.color, 4, avgScale, an.number);
+                        drawShape(imgCtx, an.startX * scaleX, an.startY * scaleY, an.endX * scaleX, an.endY * scaleY, an.type, an.color, 4, avgScale, an.number);
                     }
                 });
 
-                // Línea separadora decorativa
-                ctx.strokeStyle = "#e2e8f0";
-                ctx.lineWidth = Math.max(2, Math.round(3 * baseScale));
-                ctx.beginPath();
-                ctx.moveTo(padding, img.height + Math.round(padding / 2));
-                ctx.lineTo(c.width - padding, img.height + Math.round(padding / 2));
-                ctx.stroke();
+                const annotatedImgDataUrl = imgCanvas.toDataURL('image/png');
 
-                let currentY = img.height + padding + titleFontSize;
-                ctx.textBaseline = "alphabetic";
+                // 2. Componer HTML estructurado idéntico a la vista previa
+                const textStr = item.bullet ? (item.title ? `• ${item.title}` : '') : item.title;
+                const indStr = (item.indications || '').trim();
+                const hasText = textStr || indStr;
 
-                // Renderizar Título
-                if (titleLines.length > 0) {
-                    ctx.font = `bold ${titleFontSize}px "Segoe UI", sans-serif`;
-                    ctx.fillStyle = "#334155";
-                    titleLines.forEach(line => {
-                        ctx.fillText(line, padding, currentY);
-                        currentY += lineHeightTitle;
-                    });
-                    currentY += Math.round(6 * baseScale);
-                }
+                const cardWidth = Math.max(img.width + 40, 600); // Margen de tarjeta
 
-                // Renderizar Indicaciones
-                if (bodyLines.length > 0) {
-                    ctx.font = `${bodyFontSize}px "Segoe UI", sans-serif`;
-                    ctx.fillStyle = "#64748b";
-                    bodyLines.forEach(line => {
-                        ctx.fillText(line, padding, currentY);
-                        currentY += lineHeightBody;
-                    });
-                }
+                const htmlString = `
+                    <div xmlns="http://www.w3.org/1999/xhtml" style="font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #ffffff; padding: 20px; border-radius: 16px; box-sizing: border-box; width: ${cardWidth}px;">
+                        <div style="border-radius: 8px; overflow: hidden; width: 100%;">
+                            <img src="${annotatedImgDataUrl}" style="width: 100%; display: block; border-radius: 8px;" />
+                        </div>
+                        ${hasText ? `
+                            <div style="height: 2px; background: #e2e8f0; margin: 18px 0; border-radius: 2px;"></div>
+                            ${textStr ? `<div style="font-size: 20px; font-weight: 700; color: #1e293b; margin-bottom: 8px; word-wrap: break-word; line-height: 1.4;">${escapeHtml(textStr)}</div>` : ''}
+                            ${indStr ? `<div style="font-size: 17px; color: #475569; white-space: pre-wrap; word-wrap: break-word; line-height: 1.6;">${escapeHtml(indStr)}</div>` : ''}
+                        ` : ''}
+                    </div>
+                `;
 
-                resolve(c);
+                // 3. Crear contenedor fuera de pantalla para medir la altura exacta del HTML renderizado
+                const measureDiv = document.createElement('div');
+                measureDiv.style.position = 'absolute';
+                measureDiv.style.left = '-9999px';
+                measureDiv.style.top = '-9999px';
+                measureDiv.style.width = `${cardWidth}px`;
+                measureDiv.innerHTML = htmlString;
+                document.body.appendChild(measureDiv);
+                const measuredHeight = measureDiv.scrollHeight || measureDiv.offsetHeight;
+                document.body.removeChild(measureDiv);
+
+                // 4. Renderizar vía SVG ForeignObject directamente al Canvas final
+                const svgString = `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="${cardWidth}" height="${measuredHeight}">
+                        <foreignObject width="100%" height="100%">
+                            ${htmlString}
+                        </foreignObject>
+                    </svg>
+                `;
+
+                const svgBlob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
+                const DOMURL = window.URL || window.webkitURL || window;
+                const url = DOMURL.createObjectURL(svgBlob);
+
+                const finalImg = new Image();
+                finalImg.onload = () => {
+                    const finalCanvas = document.createElement('canvas');
+                    finalCanvas.width = cardWidth;
+                    finalCanvas.height = measuredHeight;
+                    const finalCtx = finalCanvas.getContext('2d');
+                    finalCtx.drawImage(finalImg, 0, 0);
+                    DOMURL.revokeObjectURL(url);
+                    resolve(finalCanvas);
+                };
+                finalImg.src = url;
             };
         });
     }
@@ -836,6 +822,7 @@
     downloadBtn.onclick = async () => {
         if (currentIndex === -1) return;
         saveCurrentEditorState();
+        showToast("Procesando imagen...");
         const canvas = await renderItemToCanvas(collection[currentIndex]);
         const link = document.createElement('a');
         link.download = `imagen_editada_${currentIndex + 1}.png`;
@@ -847,6 +834,7 @@
         if (currentIndex === -1) return;
         saveCurrentEditorState();
         try {
+            showToast("Copiando...");
             const canvas = await renderItemToCanvas(collection[currentIndex]);
             canvas.toBlob(async (blob) => {
                 await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
@@ -857,7 +845,6 @@
         }
     };
 
-    // Descarga masiva ZIP - Editadas
     dlAllEditedBtn.onclick = async () => {
         saveCurrentEditorState();
         if (collection.length === 0) return;
@@ -877,7 +864,6 @@
         link.click();
     };
 
-    // Descarga masiva ZIP - Originales
     dlAllOriginalBtn.onclick = async () => {
         if (collection.length === 0) return;
         const zip = new JSZip();
