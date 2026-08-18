@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>DocuSnap - Anotador y Colecciones</title>
+    <!-- JSZip para empaquetar descargas de la colección completa -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         :root {
@@ -24,6 +25,7 @@
         .drop-zone { border: 2px dashed var(--primary); padding: 20px; text-align: center; border-radius: 12px; cursor: pointer; color: var(--primary); margin-bottom: 15px; transition: 0.3s; outline: none; }
         .drop-zone:hover { background: #eef2ff; }
 
+        /* Colección UI */
         .collection-section { background: #f8fafc; border: 1px solid var(--border-color); border-radius: 12px; padding: 12px; margin-bottom: 15px; }
         .collection-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px; }
         .collection-title { font-weight: 700; color: #334155; font-size: 0.95rem; }
@@ -48,6 +50,7 @@
         .card-thumb:active { cursor: grabbing; }
         .card-thumb:hover { border-color: var(--primary); }
         .card-thumb.active { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2); }
+
         .card-thumb.dragging { opacity: 0.4; transform: scale(0.96); }
         .card-thumb.drag-over { border: 2px dashed var(--primary); background: #eef2ff; }
         .card-thumb img { width: 100%; height: 65px; object-fit: cover; border-radius: 4px; pointer-events: none; }
@@ -88,6 +91,25 @@
         .color-picker-container { display: flex; align-items: center; gap: 6px; font-size: 0.85rem; font-weight: 600; color: #334155; margin-left: auto; }
         .color-picker-container input[type="color"] { border: none; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; background: none; }
 
+        /* Barra de optimización de peso */
+        .compression-bar {
+            background: #f8fafc;
+            border: 1px solid var(--border-color);
+            padding: 10px 14px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+            font-size: 0.85rem;
+            color: #334155;
+        }
+        .compression-controls { display: flex; align-items: center; gap: 10px; }
+        .compression-controls select { padding: 5px 8px; border-radius: 6px; border: 1px solid var(--border-color); font-family: inherit; }
+        .compression-controls input[type="range"] { accent-color: var(--primary); cursor: pointer; }
+
         .button-group { display: flex; gap: 10px; margin-top: 12px; }
 
         button { padding: 10px 14px; border: none; border-radius: 8px; font-size: 0.95rem; font-weight: 600; cursor: pointer; color: white; transition: 0.2s; }
@@ -102,16 +124,7 @@
         .btn-delete-all { background: #fee2e2; border: 1px solid #fca5a5; color: var(--danger); font-size: 0.8rem; padding: 5px 10px; }
         .btn-delete-all:hover:not(:disabled) { background: #fecaca; }
 
-        /* Contenedor Renderizado Final */
-        .result-card { 
-            border: 2px solid var(--border-color); 
-            padding: 20px; 
-            border-radius: 16px; 
-            background: #ffffff; 
-            margin-top: 15px; 
-            text-align: left; 
-            box-sizing: border-box;
-        }
+        .result-card { border: 2px solid var(--border-color); padding: 15px; border-radius: 16px; background: #ffffff; margin-top: 15px; text-align: left; }
 
         .canvas-container { 
             position: relative; 
@@ -124,25 +137,10 @@
         #preview-img-display { width: 100%; display: block; border-radius: 8px; user-select: none; }
         #overlayCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: auto; touch-action: none; }
 
-        .separator { height: 2px; background: var(--border-color); margin: 18px 0; border-radius: 2px; }
+        .separator { height: 2px; background: var(--border-color); margin: 15px 0; border-radius: 2px; }
 
-        #preview-text-display { 
-            font-size: 1.15rem; 
-            color: #1e293b; 
-            font-weight: 700; 
-            margin-bottom: 8px; 
-            word-wrap: break-word; 
-            overflow-wrap: break-word;
-            line-height: 1.4;
-        }
-        #preview-indications-display { 
-            font-size: 1rem; 
-            color: #475569; 
-            white-space: pre-wrap; 
-            word-wrap: break-word;
-            overflow-wrap: break-word; 
-            line-height: 1.6; 
-        }
+        #preview-text-display { font-size: 1.1rem; color: #334155; font-weight: 600; margin-bottom: 6px; word-break: break-word; }
+        #preview-indications-display { font-size: 0.95rem; color: #64748b; white-space: pre-wrap; word-break: break-word; line-height: 1.5; }
 
         #toast { position: fixed; bottom: 20px; right: 20px; background: #1e293b; color: white; padding: 10px 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); display: none; font-size: 0.9rem; z-index: 1000; }
     </style>
@@ -200,12 +198,29 @@
 
         <textarea id="indicationsInput" rows="3" placeholder="Escribe tus notas / indicaciones..."></textarea>
 
+        <!-- Barra de compresión/optimización -->
+        <div class="compression-bar">
+            <span>⚡ <b>Optimización de Peso:</b></span>
+            <div class="compression-controls">
+                Formato:
+                <select id="exportFormat">
+                    <option value="image/jpeg" selected>JPEG (Ligero)</option>
+                    <option value="image/webp">WebP (Ultra ligero)</option>
+                    <option value="image/png">PNG (Sin pérdidas)</option>
+                </select>
+                
+                <span id="qualityContainer">
+                    Calidad: <input type="range" id="qualityRange" min="70" max="100" value="90">
+                    <b id="qualityLabel">90%</b>
+                </span>
+            </div>
+        </div>
+
         <div class="button-group">
             <button id="downloadBtn" class="btn-download">📥 Descargar Esta Imagen</button>
             <button id="copyBtn" class="btn-copy">📋 Copiar Imagen</button>
         </div>
 
-        <!-- Tarjeta que se exporta exactamente igual -->
         <div id="resultBox" class="result-card">
             <div class="canvas-container" id="canvasContainer">
                 <img id="preview-img-display" alt="Vista previa">
@@ -244,7 +259,11 @@
           colCount = document.getElementById('colCount'),
           dlAllEditedBtn = document.getElementById('dlAllEditedBtn'),
           dlAllOriginalBtn = document.getElementById('dlAllOriginalBtn'),
-          clearCollectionBtn = document.getElementById('clearCollectionBtn');
+          clearCollectionBtn = document.getElementById('clearCollectionBtn'),
+          exportFormat = document.getElementById('exportFormat'),
+          qualityRange = document.getElementById('qualityRange'),
+          qualityLabel = document.getElementById('qualityLabel'),
+          qualityContainer = document.getElementById('qualityContainer');
 
     let collection = [];
     let currentIndex = -1;
@@ -256,6 +275,11 @@
 
     let draggedIndex = null;
     let touchDragEl = null;
+
+    qualityRange.oninput = () => { qualityLabel.innerText = qualityRange.value + '%'; };
+    exportFormat.onchange = () => {
+        qualityContainer.style.display = exportFormat.value === 'image/png' ? 'none' : 'inline-flex';
+    };
 
     window.onload = () => dropZone.focus();
     dropZone.onclick = () => fileInput.click();
@@ -322,6 +346,7 @@
 
             card.onclick = () => selectItem(index);
 
+            // Drag & Drop Desktop
             card.ondragstart = (e) => {
                 draggedIndex = index;
                 card.classList.add('dragging');
@@ -349,6 +374,7 @@
                 }
             };
 
+            // Drag & Drop Touch
             let touchTimer = null;
             card.ontouchstart = (e) => {
                 if (e.target.closest('.card-controls')) return;
@@ -659,10 +685,10 @@
         ctx.strokeStyle = '#ffffff';
         ctx.stroke();
 
-        ctx.fillStyle = '#ffffff';
-        ctx.font = `bold ${Math.round(15 * scale)}px sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `bold ${Math.round(15 * scale)}px 'Segoe UI', system-ui, sans-serif`;
         ctx.fillText(num, x, y);
     }
 
@@ -714,8 +740,6 @@
 
         previewText.innerText = bulletCheck.checked ? (txt ? "• " + txt : "") : txt;
         previewIndications.innerText = ind ? ind : "";
-
-        // Ocultar separador si no hay texto
         previewSeparator.style.display = (txt || ind) ? "block" : "none";
     }
 
@@ -723,28 +747,73 @@
     bulletCheck.onchange = () => { saveCurrentEditorState(); updatePreview(); };
     indicationsInput.oninput = () => { saveCurrentEditorState(); updatePreview(); };
 
-    // Escape de caracteres especiales para XHTML en SVG
-    function escapeHtml(str) {
-        return (str || '')
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
+    function wrapTextLines(ctx, text, maxWidth) {
+        if (!text) return [];
+        const words = text.split(' ');
+        const lines = [];
+        let currentLine = words[0] || '';
+
+        for (let i = 1; i < words.length; i++) {
+            const word = words[i];
+            const testLine = currentLine + ' ' + word;
+            if (ctx.measureText(testLine).width <= maxWidth) {
+                currentLine = testLine;
+            } else {
+                lines.push(currentLine);
+                currentLine = word;
+            }
+        }
+        if (currentLine) lines.push(currentLine);
+        return lines;
     }
 
-    // Renderizador perfecto mediante HTML y Canvas Nativo
     function renderItemToCanvas(item) {
         return new Promise((resolve) => {
             const img = new Image();
             img.src = item.dataUrl;
             img.onload = () => {
-                // 1. Crear canvas temporal para la imagen con las anotaciones en su resolución original
-                const imgCanvas = document.createElement('canvas');
-                imgCanvas.width = img.width;
-                imgCanvas.height = img.height;
-                const imgCtx = imgCanvas.getContext('2d');
-                imgCtx.drawImage(img, 0, 0);
+                const c = document.createElement('canvas');
+                const ctx = c.getContext('2d');
+
+                const pad = Math.max(30, Math.round(img.width * 0.04));
+                const maxW = Math.max(100, img.width - (pad * 2));
+                
+                const titleSize = Math.max(20, Math.round(img.width * 0.032));
+                const bodySize = Math.max(16, Math.round(img.width * 0.026));
+                const lineH_title = titleSize * 1.4;
+                const lineH_body = bodySize * 1.5;
+
+                const textStr = item.bullet ? (item.title ? `• ${item.title}` : '') : item.title;
+                const rawIndLines = (item.indications || '').trim().split('\n').filter(l => l.trim() !== '');
+
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'top';
+
+                ctx.font = `bold ${titleSize}px 'Segoe UI', system-ui, sans-serif`;
+                const titleLines = wrapTextLines(ctx, textStr, maxW);
+
+                ctx.font = `${bodySize}px 'Segoe UI', system-ui, sans-serif`;
+                let bodyLines = [];
+                rawIndLines.forEach(l => {
+                    bodyLines.push(...wrapTextLines(ctx, l, maxW));
+                });
+
+                const hasText = titleLines.length > 0 || bodyLines.length > 0;
+
+                let textBlockH = 0;
+                if (hasText) {
+                    textBlockH += pad;
+                    if (titleLines.length > 0) textBlockH += (titleLines.length * lineH_title) + (pad * 0.25);
+                    if (bodyLines.length > 0) textBlockH += (bodyLines.length * lineH_body);
+                    textBlockH += pad * 1.2;
+                }
+
+                c.width = img.width;
+                c.height = img.height + textBlockH;
+
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, c.width, c.height);
+                ctx.drawImage(img, 0, 0);
 
                 const scaleX = img.width / (overlayCanvas.width || img.width);
                 const scaleY = img.height / (overlayCanvas.height || img.height);
@@ -752,94 +821,90 @@
 
                 item.annotations.forEach(an => {
                     if (an.type === 'number') {
-                        drawNumber(imgCtx, an.startX * scaleX, an.startY * scaleY, an.number, an.color, avgScale);
+                        drawNumber(ctx, an.startX * scaleX, an.startY * scaleY, an.number, an.color, avgScale);
                     } else {
-                        drawShape(imgCtx, an.startX * scaleX, an.startY * scaleY, an.endX * scaleX, an.endY * scaleY, an.type, an.color, 4, avgScale, an.number);
+                        drawShape(ctx, an.startX * scaleX, an.startY * scaleY, an.endX * scaleX, an.endY * scaleY, an.type, an.color, 4, avgScale, an.number);
                     }
                 });
 
-                const annotatedImgDataUrl = imgCanvas.toDataURL('image/png');
+                if (hasText) {
+                    ctx.textAlign = 'left';
+                    ctx.textBaseline = 'top';
 
-                // 2. Componer HTML estructurado idéntico a la vista previa
-                const textStr = item.bullet ? (item.title ? `• ${item.title}` : '') : item.title;
-                const indStr = (item.indications || '').trim();
-                const hasText = textStr || indStr;
+                    ctx.strokeStyle = '#e2e8f0';
+                    ctx.lineWidth = Math.max(2, Math.round(img.width * 0.003));
+                    ctx.beginPath();
+                    ctx.moveTo(pad, img.height + (pad * 0.35));
+                    ctx.lineTo(c.width - pad, img.height + (pad * 0.35));
+                    ctx.stroke();
 
-                const cardWidth = Math.max(img.width + 40, 600); // Margen de tarjeta
+                    let curY = img.height + (pad * 0.7);
 
-                const htmlString = `
-                    <div xmlns="http://www.w3.org/1999/xhtml" style="font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #ffffff; padding: 20px; border-radius: 16px; box-sizing: border-box; width: ${cardWidth}px;">
-                        <div style="border-radius: 8px; overflow: hidden; width: 100%;">
-                            <img src="${annotatedImgDataUrl}" style="width: 100%; display: block; border-radius: 8px;" />
-                        </div>
-                        ${hasText ? `
-                            <div style="height: 2px; background: #e2e8f0; margin: 18px 0; border-radius: 2px;"></div>
-                            ${textStr ? `<div style="font-size: 20px; font-weight: 700; color: #1e293b; margin-bottom: 8px; word-wrap: break-word; line-height: 1.4;">${escapeHtml(textStr)}</div>` : ''}
-                            ${indStr ? `<div style="font-size: 17px; color: #475569; white-space: pre-wrap; word-wrap: break-word; line-height: 1.6;">${escapeHtml(indStr)}</div>` : ''}
-                        ` : ''}
-                    </div>
-                `;
+                    if (titleLines.length > 0) {
+                        ctx.font = `bold ${titleSize}px 'Segoe UI', system-ui, sans-serif`;
+                        ctx.fillStyle = '#1e293b';
+                        titleLines.forEach(l => {
+                            ctx.fillText(l, pad, curY);
+                            curY += lineH_title;
+                        });
+                        curY += pad * 0.2;
+                    }
 
-                // 3. Crear contenedor fuera de pantalla para medir la altura exacta del HTML renderizado
-                const measureDiv = document.createElement('div');
-                measureDiv.style.position = 'absolute';
-                measureDiv.style.left = '-9999px';
-                measureDiv.style.top = '-9999px';
-                measureDiv.style.width = `${cardWidth}px`;
-                measureDiv.innerHTML = htmlString;
-                document.body.appendChild(measureDiv);
-                const measuredHeight = measureDiv.scrollHeight || measureDiv.offsetHeight;
-                document.body.removeChild(measureDiv);
+                    if (bodyLines.length > 0) {
+                        ctx.font = `${bodySize}px 'Segoe UI', system-ui, sans-serif`;
+                        ctx.fillStyle = '#475569';
+                        bodyLines.forEach(l => {
+                            ctx.fillText(l, pad, curY);
+                            curY += lineH_body;
+                        });
+                    }
+                }
 
-                // 4. Renderizar vía SVG ForeignObject directamente al Canvas final
-                const svgString = `
-                    <svg xmlns="http://www.w3.org/2000/svg" width="${cardWidth}" height="${measuredHeight}">
-                        <foreignObject width="100%" height="100%">
-                            ${htmlString}
-                        </foreignObject>
-                    </svg>
-                `;
-
-                const svgBlob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
-                const DOMURL = window.URL || window.webkitURL || window;
-                const url = DOMURL.createObjectURL(svgBlob);
-
-                const finalImg = new Image();
-                finalImg.onload = () => {
-                    const finalCanvas = document.createElement('canvas');
-                    finalCanvas.width = cardWidth;
-                    finalCanvas.height = measuredHeight;
-                    const finalCtx = finalCanvas.getContext('2d');
-                    finalCtx.drawImage(finalImg, 0, 0);
-                    DOMURL.revokeObjectURL(url);
-                    resolve(finalCanvas);
-                };
-                finalImg.src = url;
+                resolve(c);
             };
         });
+    }
+
+    function getExportConfig() {
+        const format = exportFormat.value;
+        const quality = format === 'image/png' ? undefined : (parseInt(qualityRange.value, 10) / 100);
+        const ext = format === 'image/jpeg' ? 'jpg' : (format === 'image/webp' ? 'webp' : 'png');
+        return { format, quality, ext };
+    }
+
+    function formatBytes(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
     }
 
     downloadBtn.onclick = async () => {
         if (currentIndex === -1) return;
         saveCurrentEditorState();
-        showToast("Procesando imagen...");
         const canvas = await renderItemToCanvas(collection[currentIndex]);
-        const link = document.createElement('a');
-        link.download = `imagen_editada_${currentIndex + 1}.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
+        const config = getExportConfig();
+        
+        canvas.toBlob((blob) => {
+            const link = document.createElement('a');
+            link.download = `imagen_editada_${currentIndex + 1}.${config.ext}`;
+            link.href = URL.createObjectURL(blob);
+            link.click();
+            showToast(`Descargada (${formatBytes(blob.size)})`);
+        }, config.format, config.quality);
     };
 
     copyBtn.onclick = async () => {
         if (currentIndex === -1) return;
         saveCurrentEditorState();
         try {
-            showToast("Copiando...");
             const canvas = await renderItemToCanvas(collection[currentIndex]);
+            // El portapapeles del sistema solo acepta image/png
             canvas.toBlob(async (blob) => {
                 await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
                 showToast("¡Imagen copiada al portapapeles!");
-            });
+            }, 'image/png');
         } catch (err) { 
             alert("No se pudo copiar directamente al portapapeles en este dispositivo."); 
         }
@@ -849,19 +914,21 @@
         saveCurrentEditorState();
         if (collection.length === 0) return;
         const zip = new JSZip();
-        showToast("Generando ZIP de imágenes editadas...");
+        const config = getExportConfig();
+        showToast("Generando ZIP optimizado...");
 
         for (let i = 0; i < collection.length; i++) {
             const canvas = await renderItemToCanvas(collection[i]);
-            const base64Data = canvas.toDataURL('image/png').split(',')[1];
-            zip.file(`editada_${i + 1}.png`, base64Data, { base64: true });
+            const base64Data = canvas.toDataURL(config.format, config.quality).split(',')[1];
+            zip.file(`editada_${i + 1}.${config.ext}`, base64Data, { base64: true });
         }
 
         const content = await zip.generateAsync({ type: "blob" });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(content);
-        link.download = "coleccion_editadas.zip";
+        link.download = `coleccion_editadas_${config.ext}.zip`;
         link.click();
+        showToast(`ZIP descargado (${formatBytes(content.size)})`);
     };
 
     dlAllOriginalBtn.onclick = async () => {
