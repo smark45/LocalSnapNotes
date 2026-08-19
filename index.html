@@ -158,7 +158,7 @@
     <!-- Barra de Colección -->
     <div class="collection-section" id="collectionSection" style="display:none;">
         <div class="collection-header">
-            <span class="collection-title">📂 Colección (<span id="colCount">0</span>) - <i>Arrastra las tarjetas para reordenar</i></span>
+            <span class="collection-title">📂 Colección (<span id="colCount">0</span>) - <i>Guardado en este navegador</i></span>
             <div class="collection-actions">
                 <button class="btn-action-col" id="dlAllEditedBtn">📥 Descargar Editadas (.zip)</button>
                 <button class="btn-action-col" id="dlAllOriginalBtn">📥 Descargar Originales (.zip)</button>
@@ -276,12 +276,83 @@
     let draggedIndex = null;
     let touchDragEl = null;
 
+    // --- BASE DE DATOS LOCAL (IndexedDB) ---
+    const DB_NAME = 'DocuSnapDB';
+    const DB_VERSION = 1;
+    const STORE_NAME = 'project_state';
+    let dbInstance = null;
+
+    function initDB() {
+        return new Promise((resolve) => {
+            const request = indexedDB.open(DB_NAME, DB_VERSION);
+            request.onupgradeneeded = (e) => {
+                const db = e.target.result;
+                if (!db.objectStoreNames.contains(STORE_NAME)) {
+                    db.createObjectStore(STORE_NAME);
+                }
+            };
+            request.onsuccess = (e) => {
+                dbInstance = e.target.result;
+                resolve(dbInstance);
+            };
+            request.onerror = () => resolve(null);
+        });
+    }
+
+    let saveTimeout = null;
+    function autoSaveToIndexedDB() {
+        if (!dbInstance) return;
+        clearTimeout(saveTimeout);
+        saveTimeout = setTimeout(() => {
+            try {
+                const tx = dbInstance.transaction(STORE_NAME, 'readwrite');
+                const store = tx.objectStore(STORE_NAME);
+                store.put({ collection, currentIndex }, 'current_session');
+            } catch (err) {}
+        }, 200);
+    }
+
+    async function loadFromIndexedDB() {
+        if (!dbInstance) return;
+        return new Promise((resolve) => {
+            try {
+                const tx = dbInstance.transaction(STORE_NAME, 'readonly');
+                const store = tx.objectStore(STORE_NAME);
+                const req = store.get('current_session');
+                req.onsuccess = () => {
+                    if (req.result && Array.isArray(req.result.collection) && req.result.collection.length > 0) {
+                        collection = req.result.collection;
+                        currentIndex = Math.max(0, Math.min(req.result.currentIndex || 0, collection.length - 1));
+                        renderCollectionUI();
+                        loadItemIntoEditor(collection[currentIndex]);
+                    }
+                    resolve();
+                };
+                req.onerror = () => resolve();
+            } catch(e) { resolve(); }
+        });
+    }
+
+    function clearIndexedDB() {
+        if (!dbInstance) return;
+        try {
+            const tx = dbInstance.transaction(STORE_NAME, 'readwrite');
+            tx.objectStore(STORE_NAME).clear();
+        } catch(e) {}
+    }
+
+    // --- INICIALIZACIÓN ---
+    window.addEventListener('load', async () => {
+        await initDB();
+        await loadFromIndexedDB();
+        dropZone.focus();
+    });
+
     qualityRange.oninput = () => { qualityLabel.innerText = qualityRange.value + '%'; };
     exportFormat.onchange = () => {
         qualityContainer.style.display = exportFormat.value === 'image/png' ? 'none' : 'inline-flex';
     };
 
-    window.onload = () => dropZone.focus();
     dropZone.onclick = () => fileInput.click();
 
     fileInput.onchange = (e) => {
@@ -304,13 +375,14 @@
     function showToast(msg) {
         toast.innerText = msg;
         toast.style.display = 'block';
-        setTimeout(() => { toast.style.display = 'none'; }, 2500);
+        setTimeout(() => { toast.style.display = 'none'; }, 2000);
     }
 
     function addFileToCollection(file) {
         if (!file) return;
         const reader = new FileReader();
         reader.onload = (e) => {
+            saveCurrentEditorState();
             const newItem = {
                 id: Date.now() + Math.random(),
                 dataUrl: e.target.result,
@@ -321,8 +393,12 @@
                 numberCounter: 1
             };
             collection.push(newItem);
+            if (currentIndex === -1) {
+                currentIndex = collection.length - 1;
+                loadItemIntoEditor(newItem);
+            }
             renderCollectionUI();
-            if (currentIndex === -1) selectItem(0);
+            autoSaveToIndexedDB();
         };
         reader.readAsDataURL(file);
     }
@@ -463,6 +539,7 @@
         currentIndex = toIndex;
         renderCollectionUI();
         loadItemIntoEditor(collection[currentIndex]);
+        autoSaveToIndexedDB();
     }
 
     function selectItem(index) {
@@ -471,6 +548,7 @@
         currentIndex = index;
         loadItemIntoEditor(collection[currentIndex]);
         renderCollectionUI();
+        autoSaveToIndexedDB();
     }
 
     function moveItem(index, step) {
@@ -480,22 +558,26 @@
     }
 
     function deleteItem(index) {
+        saveCurrentEditorState();
         collection.splice(index, 1);
         if (collection.length === 0) {
             currentIndex = -1;
             renderCollectionUI();
+            clearIndexedDB();
         } else {
             currentIndex = Math.max(0, Math.min(currentIndex, collection.length - 1));
             loadItemIntoEditor(collection[currentIndex]);
             renderCollectionUI();
+            autoSaveToIndexedDB();
         }
     }
 
     clearCollectionBtn.onclick = () => {
-        if (confirm("¿Estás seguro de eliminar toda la colección local?")) {
+        if (confirm("¿Estás seguro de eliminar toda la colección local? Se borrará todo el trabajo guardado.")) {
             collection = [];
             currentIndex = -1;
             renderCollectionUI();
+            clearIndexedDB();
         }
     };
 
@@ -504,13 +586,14 @@
         collection[currentIndex].title = textInput.value;
         collection[currentIndex].bullet = bulletCheck.checked;
         collection[currentIndex].indications = indicationsInput.value;
+        autoSaveToIndexedDB();
     }
 
     function loadItemIntoEditor(item) {
         editorArea.style.display = 'block';
-        textInput.value = item.title;
-        bulletCheck.checked = item.bullet;
-        indicationsInput.value = item.indications;
+        textInput.value = item.title || '';
+        bulletCheck.checked = !!item.bullet;
+        indicationsInput.value = item.indications || '';
         previewImg.src = item.dataUrl;
 
         previewImg.onload = () => {
@@ -546,6 +629,7 @@
         }
         redrawOverlay();
         autoFormatIndications();
+        autoSaveToIndexedDB();
     };
 
     document.getElementById('clearBtn').onclick = () => {
@@ -555,6 +639,7 @@
         item.numberCounter = 1;
         redrawOverlay();
         autoFormatIndications();
+        autoSaveToIndexedDB();
     };
 
     function getPointerPos(e) {
@@ -587,6 +672,7 @@
             item.numberCounter++;
             redrawOverlay();
             autoFormatIndications();
+            autoSaveToIndexedDB();
         } else {
             isDrawing = true;
         }
@@ -634,6 +720,7 @@
                 number: assignedNum
             });
             autoFormatIndications();
+            autoSaveToIndexedDB();
         }
         redrawOverlay();
     }
@@ -658,6 +745,7 @@
             indicationsInput.value = generatedLines;
             item.indications = generatedLines;
             updatePreview();
+            autoSaveToIndexedDB();
         }
     }
 
@@ -900,7 +988,6 @@
         saveCurrentEditorState();
         try {
             const canvas = await renderItemToCanvas(collection[currentIndex]);
-            // El portapapeles del sistema solo acepta image/png
             canvas.toBlob(async (blob) => {
                 await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
                 showToast("¡Imagen copiada al portapapeles!");
