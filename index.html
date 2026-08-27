@@ -17,8 +17,14 @@
             --border-color: #e2e8f0;
         }
 
-        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg-body); padding: 15px; display: flex; justify-content: center; margin: 0; }
+        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg-body); padding: 15px; display: flex; flex-direction: column; align-items: center; margin: 0; }
         .container { max-width: 850px; width: 100%; background: white; padding: 25px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); box-sizing: border-box; }
+
+        /* Navegación entre páginas de la suite DocuSnap */
+        .app-nav { width: 100%; max-width: 850px; box-sizing: border-box; display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+        .app-nav-link { text-decoration: none; padding: 9px 16px; border-radius: 8px; font-weight: 600; font-size: 0.85rem; color: #334155; background: white; border: 1px solid var(--border-color); transition: 0.2s; }
+        .app-nav-link:hover { background: #eef2ff; border-color: var(--primary); }
+        .app-nav-link.active { background: var(--primary); color: white; border-color: var(--primary); }
 
         h2 { color: #1e293b; margin-top: 0; font-size: 1.4rem; }
 
@@ -33,17 +39,17 @@
 
         .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(115px, 1fr)); gap: 10px; max-height: 220px; overflow-y: auto; padding: 4px; }
 
-        .card-thumb { 
-            border: 2px solid var(--border-color); 
-            border-radius: 8px; 
-            padding: 6px; 
-            background: white; 
-            position: relative; 
-            cursor: grab; 
-            transition: transform 0.15s, border-color 0.2s, box-shadow 0.2s; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
+        .card-thumb {
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 6px;
+            background: white;
+            position: relative;
+            cursor: grab;
+            transition: transform 0.15s, border-color 0.2s, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             user-select: none;
             touch-action: pan-y;
         }
@@ -56,16 +62,16 @@
         .card-thumb img { width: 100%; height: 65px; object-fit: cover; border-radius: 4px; pointer-events: none; }
 
         .card-controls { display: flex; gap: 4px; margin-top: 6px; width: 100%; justify-content: space-between; }
-        .card-controls .btn-mini { 
+        .card-controls .btn-mini {
             flex: 1;
-            padding: 5px 0; 
-            font-size: 0.85rem; 
+            padding: 5px 0;
+            font-size: 0.85rem;
             font-weight: 700;
-            border-radius: 4px; 
-            border: 1px solid #cbd5e1; 
-            background: #f1f5f9; 
+            border-radius: 4px;
+            border: 1px solid #cbd5e1;
+            background: #f1f5f9;
             color: #1e293b !important;
-            cursor: pointer; 
+            cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -91,6 +97,12 @@
         .color-picker-container { display: flex; align-items: center; gap: 6px; font-size: 0.85rem; font-weight: 600; color: #334155; margin-left: auto; }
         .color-picker-container input[type="color"] { border: none; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; background: none; }
 
+        /* Barra de selección de anotación */
+        .selection-bar { background: #eef2ff; border: 1px solid var(--primary); border-radius: 10px; padding: 8px 12px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 0.85rem; color: #334155; flex-wrap: wrap; }
+
+        /* Input flotante para la herramienta de texto */
+        .floating-text-input { position: absolute; z-index: 10; border: 1px dashed var(--primary); background: rgba(255,255,255,0.95); font: bold 16px 'Segoe UI', system-ui, sans-serif; padding: 2px 4px; border-radius: 4px; min-width: 80px; }
+
         /* Barra de optimización de peso */
         .compression-bar {
             background: #f8fafc;
@@ -110,6 +122,16 @@
         .compression-controls select { padding: 5px 8px; border-radius: 6px; border: 1px solid var(--border-color); font-family: inherit; }
         .compression-controls input[type="range"] { accent-color: var(--primary); cursor: pointer; }
 
+        /* Barra de marca de agua */
+        .watermark-bar { background: #f8fafc; border: 1px solid var(--border-color); border-radius: 10px; padding: 10px 14px; margin-top: 10px; font-size: 0.85rem; color: #334155; }
+        .watermark-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+        .watermark-row + .watermark-row { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border-color); }
+        .watermark-bar label.field-label { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+        .watermark-bar input[type="text"] { padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border-color); font-family: inherit; font-size: 0.85rem; width: 170px; }
+        .watermark-bar select { padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border-color); font-family: inherit; font-size: 0.85rem; }
+        .watermark-bar input[type="range"] { accent-color: var(--primary); cursor: pointer; }
+        .watermark-bar input[type="color"] { border: none; width: 26px; height: 26px; border-radius: 50%; cursor: pointer; background: none; vertical-align: middle; }
+
         .button-group { display: flex; gap: 10px; margin-top: 12px; }
 
         button { padding: 10px 14px; border: none; border-radius: 8px; font-size: 0.95rem; font-weight: 600; cursor: pointer; color: white; transition: 0.2s; }
@@ -126,12 +148,12 @@
 
         .result-card { border: 2px solid var(--border-color); padding: 15px; border-radius: 16px; background: #ffffff; margin-top: 15px; text-align: left; }
 
-        .canvas-container { 
-            position: relative; 
-            width: 100%; 
-            overflow: hidden; 
-            border-radius: 8px; 
-            cursor: crosshair; 
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            overflow: hidden;
+            border-radius: 8px;
+            cursor: crosshair;
             touch-action: none;
         }
         #preview-img-display { width: 100%; display: block; border-radius: 8px; user-select: none; }
@@ -146,6 +168,11 @@
     </style>
 </head>
 <body>
+
+<nav class="app-nav">
+    <a href="index.html" class="app-nav-link active">🎨 Anotador de Imágenes</a>
+    <a href="code-formatter.html" class="app-nav-link">💻 Formatear Código</a>
+</nav>
 
 <div class="container">
     <h2>🎨 Creador con Figuras, Flechas y Colección</h2>
@@ -162,11 +189,14 @@
             <div class="collection-actions">
                 <button class="btn-action-col" id="dlAllEditedBtn">📥 Descargar Editadas (.zip)</button>
                 <button class="btn-action-col" id="dlAllOriginalBtn">📥 Descargar Originales (.zip)</button>
+                <button class="btn-action-col" id="dlBackupBtn">💾 Exportar Backup (.json)</button>
+                <button class="btn-action-col" id="importBackupBtn">📤 Importar Backup</button>
                 <button class="btn-delete-all" id="clearCollectionBtn">🗑️ Vaciar Colección</button>
             </div>
         </div>
         <div class="gallery-grid" id="galleryGrid"></div>
     </div>
+    <input type="file" id="importFileInput" accept="application/json" hidden>
 
     <!-- Herramientas de Edición -->
     <div id="editorArea" style="display:none;">
@@ -174,7 +204,11 @@
             <div class="tools-row">
                 <button class="tool-btn active" data-tool="arrow">➡️ Flecha</button>
                 <button class="tool-btn" data-tool="circle">⭕ Elipse</button>
+                <button class="tool-btn" data-tool="rect">▭ Rectángulo</button>
                 <button class="tool-btn" data-tool="number">🔢 Número</button>
+                <button class="tool-btn" data-tool="text">🔤 Texto</button>
+                <button class="tool-btn" data-tool="blur">🌫️ Difuminar</button>
+                <button class="tool-btn" data-tool="select">🖱️ Seleccionar</button>
                 <button class="tool-btn btn-danger" id="undoBtn">↩️ Deshacer</button>
                 <button class="tool-btn btn-danger" id="clearBtn">🗑️ Borrar Trazos</button>
 
@@ -185,12 +219,17 @@
 
             <div class="tools-row" style="margin-top: 4px; padding-top: 4px; border-top: 1px dashed var(--border-color);">
                 <label class="checkbox-group">
-                    <input type="checkbox" id="autoNumberShapesCheck" checked> Numerar figuras (flechas / elipses)
+                    <input type="checkbox" id="autoNumberShapesCheck" checked> Numerar figuras (flechas / elipses / rectángulos)
                 </label>
                 <label class="checkbox-group" style="margin-left: 12px;">
                     <input type="checkbox" id="autoInstructionsCheck" checked> Numeración automática en notas
                 </label>
             </div>
+        </div>
+
+        <div class="selection-bar" id="selectionBar" style="display:none;">
+            <span id="selectionInfo"></span>
+            <button class="tool-btn btn-danger" id="deleteSelectedBtn" type="button">🗑️ Eliminar selección</button>
         </div>
 
         <textarea id="textInput" placeholder="Descripción principal..."></textarea>
@@ -208,11 +247,47 @@
                     <option value="image/webp">WebP (Ultra ligero)</option>
                     <option value="image/png">PNG (Sin pérdidas)</option>
                 </select>
-                
+
                 <span id="qualityContainer">
                     Calidad: <input type="range" id="qualityRange" min="70" max="100" value="90">
                     <b id="qualityLabel">90%</b>
                 </span>
+            </div>
+        </div>
+
+        <!-- Barra de marca de agua -->
+        <div class="watermark-bar">
+            <div class="watermark-row">
+                <label class="checkbox-group" style="margin:0;"><input type="checkbox" id="watermarkEnabledCheck"> 🖋️ Incluir marca de agua en esta imagen</label>
+            </div>
+            <div class="watermark-row">
+                <label class="field-label">Texto:
+                    <input type="text" id="watermarkTextInput" placeholder="Ej. CONFIDENCIAL" value="CONFIDENCIAL">
+                </label>
+                <label class="field-label">Posición:
+                    <select id="watermarkPositionSelect">
+                        <option value="bottom-right" selected>Inferior derecha</option>
+                        <option value="bottom-center">Inferior centro</option>
+                        <option value="bottom-left">Inferior izquierda</option>
+                        <option value="top-right">Superior derecha</option>
+                        <option value="top-center">Superior centro</option>
+                        <option value="top-left">Superior izquierda</option>
+                        <option value="middle-right">Centro derecha</option>
+                        <option value="center">Centro</option>
+                        <option value="middle-left">Centro izquierda</option>
+                        <option value="tile">Repetida en mosaico (diagonal)</option>
+                    </select>
+                </label>
+                <label class="field-label">Opacidad: <input type="range" id="watermarkOpacityRange" min="5" max="100" value="30"><span id="watermarkOpacityLabel">30%</span></label>
+                <label class="field-label">Color: <input type="color" id="watermarkColorPicker" value="#000000"></label>
+            </div>
+            <div class="watermark-row">
+                <label class="field-label">Por defecto en imágenes nuevas:
+                    <select id="watermarkDefaultSelect">
+                        <option value="none" selected>Ninguna</option>
+                        <option value="all">Todas</option>
+                    </select>
+                </label>
             </div>
         </div>
 
@@ -247,6 +322,7 @@
           resultBox = document.getElementById('resultBox'),
           previewImg = document.getElementById('preview-img-display'),
           overlayCanvas = document.getElementById('overlayCanvas'),
+          canvasContainer = document.getElementById('canvasContainer'),
           previewText = document.getElementById('preview-text-display'),
           previewIndications = document.getElementById('preview-indications-display'),
           previewSeparator = document.getElementById('previewSeparator'),
@@ -259,11 +335,24 @@
           colCount = document.getElementById('colCount'),
           dlAllEditedBtn = document.getElementById('dlAllEditedBtn'),
           dlAllOriginalBtn = document.getElementById('dlAllOriginalBtn'),
+          dlBackupBtn = document.getElementById('dlBackupBtn'),
+          importBackupBtn = document.getElementById('importBackupBtn'),
+          importFileInput = document.getElementById('importFileInput'),
           clearCollectionBtn = document.getElementById('clearCollectionBtn'),
+          selectionBar = document.getElementById('selectionBar'),
+          selectionInfo = document.getElementById('selectionInfo'),
+          deleteSelectedBtn = document.getElementById('deleteSelectedBtn'),
           exportFormat = document.getElementById('exportFormat'),
           qualityRange = document.getElementById('qualityRange'),
           qualityLabel = document.getElementById('qualityLabel'),
-          qualityContainer = document.getElementById('qualityContainer');
+          qualityContainer = document.getElementById('qualityContainer'),
+          watermarkEnabledCheck = document.getElementById('watermarkEnabledCheck'),
+          watermarkTextInput = document.getElementById('watermarkTextInput'),
+          watermarkPositionSelect = document.getElementById('watermarkPositionSelect'),
+          watermarkOpacityRange = document.getElementById('watermarkOpacityRange'),
+          watermarkOpacityLabel = document.getElementById('watermarkOpacityLabel'),
+          watermarkColorPicker = document.getElementById('watermarkColorPicker'),
+          watermarkDefaultSelect = document.getElementById('watermarkDefaultSelect');
 
     let collection = [];
     let currentIndex = -1;
@@ -275,6 +364,23 @@
 
     let draggedIndex = null;
     let touchDragEl = null;
+
+    let selectedAnnotationId = null;
+    let annotationIdCounter = 1;
+    function nextAnnId() { return Date.now() + '_' + (annotationIdCounter++); }
+
+    const NUMBERABLE_TYPES = ['arrow', 'circle', 'rect'];
+    const ANNOTATION_LABELS = { arrow: 'Flecha', circle: 'Elipse', rect: 'Rectángulo', number: 'Número', text: 'Texto', blur: 'Difuminado' };
+
+    // Ajustes GLOBALES de marca de agua (texto/posición/opacidad/color compartidos por toda
+    // la colección); solo el "activada/desactivada" vive por imagen (item.watermarkEnabled).
+    let watermarkSettings = {
+        text: 'CONFIDENCIAL',
+        opacity: 30,
+        position: 'bottom-right',
+        color: '#000000',
+        defaultEnabled: false
+    };
 
     // --- BASE DE DATOS LOCAL (IndexedDB) ---
     const DB_NAME = 'DocuSnapDB';
@@ -307,7 +413,7 @@
             try {
                 const tx = dbInstance.transaction(STORE_NAME, 'readwrite');
                 const store = tx.objectStore(STORE_NAME);
-                store.put({ collection, currentIndex }, 'current_session');
+                store.put({ collection, currentIndex, watermarkSettings }, 'current_session');
             } catch (err) {}
         }, 200);
     }
@@ -320,6 +426,10 @@
                 const store = tx.objectStore(STORE_NAME);
                 const req = store.get('current_session');
                 req.onsuccess = () => {
+                    if (req.result && req.result.watermarkSettings) {
+                        watermarkSettings = Object.assign(watermarkSettings, req.result.watermarkSettings);
+                    }
+                    syncWatermarkGlobalInputs();
                     if (req.result && Array.isArray(req.result.collection) && req.result.collection.length > 0) {
                         collection = req.result.collection;
                         currentIndex = Math.max(0, Math.min(req.result.currentIndex || 0, collection.length - 1));
@@ -353,6 +463,89 @@
         qualityContainer.style.display = exportFormat.value === 'image/png' ? 'none' : 'inline-flex';
     };
 
+    // --- MARCA DE AGUA (ajustes globales compartidos por toda la colección) ---
+    function syncWatermarkGlobalInputs() {
+        watermarkTextInput.value = watermarkSettings.text;
+        watermarkPositionSelect.value = watermarkSettings.position;
+        watermarkOpacityRange.value = watermarkSettings.opacity;
+        watermarkOpacityLabel.textContent = watermarkSettings.opacity + '%';
+        watermarkColorPicker.value = watermarkSettings.color;
+        watermarkDefaultSelect.value = watermarkSettings.defaultEnabled ? 'all' : 'none';
+    }
+
+    function saveWatermarkGlobalsFromUI() {
+        watermarkSettings.text = watermarkTextInput.value;
+        watermarkSettings.position = watermarkPositionSelect.value;
+        watermarkSettings.opacity = parseInt(watermarkOpacityRange.value, 10);
+        watermarkSettings.color = watermarkColorPicker.value;
+        watermarkSettings.defaultEnabled = watermarkDefaultSelect.value === 'all';
+        autoSaveToIndexedDB();
+    }
+
+    watermarkTextInput.oninput = () => { saveWatermarkGlobalsFromUI(); redrawOverlay(); };
+    watermarkPositionSelect.onchange = () => { saveWatermarkGlobalsFromUI(); redrawOverlay(); };
+    watermarkOpacityRange.oninput = () => {
+        watermarkOpacityLabel.textContent = watermarkOpacityRange.value + '%';
+        saveWatermarkGlobalsFromUI();
+        redrawOverlay();
+    };
+    watermarkColorPicker.oninput = () => { saveWatermarkGlobalsFromUI(); redrawOverlay(); };
+    watermarkDefaultSelect.onchange = () => { saveWatermarkGlobalsFromUI(); };
+
+    watermarkEnabledCheck.onchange = () => {
+        if (currentIndex === -1) return;
+        collection[currentIndex].watermarkEnabled = watermarkEnabledCheck.checked;
+        redrawOverlay();
+        autoSaveToIndexedDB();
+    };
+
+    function drawWatermark(ctx, w, h) {
+        const text = (watermarkSettings.text || '').trim();
+        if (!text) return;
+
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, Math.min(100, watermarkSettings.opacity)) / 100;
+        ctx.fillStyle = watermarkSettings.color || '#000000';
+        const fontSize = Math.max(12, Math.round(Math.min(w, h) * 0.05));
+        ctx.font = `bold ${fontSize}px 'Segoe UI', system-ui, sans-serif`;
+
+        if (watermarkSettings.position === 'tile') {
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            const textW = ctx.measureText(text).width;
+            const stepX = Math.max(60, textW + fontSize * 3);
+            const stepY = Math.max(60, fontSize * 4);
+            ctx.translate(w / 2, h / 2);
+            ctx.rotate(-Math.PI / 6);
+            ctx.translate(-w / 2, -h / 2);
+            for (let y = -h * 0.5; y < h * 1.5; y += stepY) {
+                for (let x = -w * 0.5; x < w * 1.5; x += stepX) {
+                    ctx.fillText(text, x, y);
+                }
+            }
+            ctx.restore();
+            return;
+        }
+
+        const pad = Math.max(10, Math.round(Math.min(w, h) * 0.03));
+        const positions = {
+            'top-left': { x: pad, y: pad, align: 'left', baseline: 'top' },
+            'top-center': { x: w / 2, y: pad, align: 'center', baseline: 'top' },
+            'top-right': { x: w - pad, y: pad, align: 'right', baseline: 'top' },
+            'middle-left': { x: pad, y: h / 2, align: 'left', baseline: 'middle' },
+            'center': { x: w / 2, y: h / 2, align: 'center', baseline: 'middle' },
+            'middle-right': { x: w - pad, y: h / 2, align: 'right', baseline: 'middle' },
+            'bottom-left': { x: pad, y: h - pad, align: 'left', baseline: 'bottom' },
+            'bottom-center': { x: w / 2, y: h - pad, align: 'center', baseline: 'bottom' },
+            'bottom-right': { x: w - pad, y: h - pad, align: 'right', baseline: 'bottom' }
+        };
+        const pos = positions[watermarkSettings.position] || positions['bottom-right'];
+        ctx.textAlign = pos.align;
+        ctx.textBaseline = pos.baseline;
+        ctx.fillText(text, pos.x, pos.y);
+        ctx.restore();
+    }
+
     dropZone.onclick = () => fileInput.click();
 
     fileInput.onchange = (e) => {
@@ -361,7 +554,7 @@
             fileInput.value = '';
         }
     };
-    
+
     window.addEventListener('paste', (e) => {
         const items = e.clipboardData || e.originalEvent.clipboardData;
         if (!items) return;
@@ -390,7 +583,9 @@
                 bullet: false,
                 indications: '',
                 annotations: [],
-                numberCounter: 1
+                numberCounter: 1,
+                schemaVersion: 2,
+                watermarkEnabled: watermarkSettings.defaultEnabled
             };
             collection.push(newItem);
             if (currentIndex === -1) {
@@ -581,6 +776,70 @@
         }
     };
 
+    // --- BACKUP: EXPORTAR / IMPORTAR COLECCIÓN COMO JSON ---
+    dlBackupBtn.onclick = () => {
+        saveCurrentEditorState();
+        if (collection.length === 0) { showToast('No hay nada que exportar'); return; }
+        const payload = {
+            app: 'DocuSnap',
+            exportedAt: new Date().toISOString(),
+            version: 1,
+            collection: collection
+        };
+        const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `docusnap_backup_${Date.now()}.json`;
+        link.click();
+        showToast('Backup exportado');
+    };
+
+    importBackupBtn.onclick = () => importFileInput.click();
+
+    importFileInput.onchange = (e) => {
+        const file = e.target.files && e.target.files[0];
+        importFileInput.value = '';
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            try {
+                const data = JSON.parse(ev.target.result);
+                const items = Array.isArray(data.collection) ? data.collection : (Array.isArray(data) ? data : null);
+                if (!items) throw new Error('El archivo no tiene una colección válida.');
+
+                if (!confirm(`Se agregarán ${items.length} imagen(es) a tu colección actual. ¿Continuar?`)) return;
+
+                saveCurrentEditorState();
+                items.forEach(it => {
+                    if (!it || !it.dataUrl) return;
+                    collection.push({
+                        id: Date.now() + Math.random(),
+                        dataUrl: it.dataUrl,
+                        title: it.title || '',
+                        bullet: !!it.bullet,
+                        indications: it.indications || '',
+                        annotations: Array.isArray(it.annotations) ? it.annotations.map(a => ({ ...a, id: nextAnnId() })) : [],
+                        numberCounter: it.numberCounter || 1,
+                        schemaVersion: it.schemaVersion || undefined,
+                        watermarkEnabled: it.watermarkEnabled !== undefined ? !!it.watermarkEnabled : watermarkSettings.defaultEnabled
+                    });
+                });
+
+                if (currentIndex === -1 && collection.length > 0) {
+                    currentIndex = 0;
+                    loadItemIntoEditor(collection[0]);
+                }
+                renderCollectionUI();
+                autoSaveToIndexedDB();
+                showToast('Backup importado');
+            } catch (err) {
+                alert('No se pudo leer el archivo de backup: ' + err.message);
+            }
+        };
+        reader.readAsText(file);
+    };
+
     function saveCurrentEditorState() {
         if (currentIndex < 0 || !collection[currentIndex]) return;
         collection[currentIndex].title = textInput.value;
@@ -589,15 +848,49 @@
         autoSaveToIndexedDB();
     }
 
+    // --- MIGRACIÓN DE ANOTACIONES ANTIGUAS (píxeles absolutos -> fracciones 0..1) ---
+    // Las versiones previas guardaban startX/startY/endX/endY en píxeles del canvas,
+    // lo que desalineaba las anotaciones al redimensionar la ventana o exportar. Ahora
+    // todo se guarda como fracción del tamaño de la imagen para que sea independiente del tamaño de pantalla.
+    function migrateItemIfNeeded(item, w, h) {
+        if (!item.schemaVersion) {
+            (item.annotations || []).forEach(a => {
+                if (a.startXf === undefined && a.startX !== undefined && w && h) {
+                    a.startXf = a.startX / w;
+                    a.startYf = a.startY / h;
+                }
+                if (a.endXf === undefined && a.endX !== undefined && w && h) {
+                    a.endXf = a.endX / w;
+                    a.endYf = a.endY / h;
+                }
+            });
+            item.schemaVersion = 2;
+        }
+        (item.annotations || []).forEach(a => { if (!a.id) a.id = nextAnnId(); });
+        // Las colecciones guardadas antes de la marca de agua no deben mostrarla de golpe.
+        if (item.watermarkEnabled === undefined) item.watermarkEnabled = false;
+    }
+
+    function computeDisplayDims(naturalW, naturalH) {
+        const refW = overlayCanvas.width || previewImg.clientWidth || 800;
+        const ratio = naturalW ? (naturalH / naturalW) : 1;
+        return { w: refW, h: refW * ratio };
+    }
+
     function loadItemIntoEditor(item) {
         editorArea.style.display = 'block';
         textInput.value = item.title || '';
         bulletCheck.checked = !!item.bullet;
         indicationsInput.value = item.indications || '';
         previewImg.src = item.dataUrl;
+        selectedAnnotationId = null;
+        watermarkEnabledCheck.checked = !!item.watermarkEnabled;
 
         previewImg.onload = () => {
             setupOverlay();
+            migrateItemIfNeeded(item, overlayCanvas.width, overlayCanvas.height);
+            redrawOverlay();
+            updateSelectionBar();
             updatePreview();
         };
     }
@@ -605,11 +898,13 @@
     function setupOverlay() {
         overlayCanvas.width = previewImg.clientWidth;
         overlayCanvas.height = previewImg.clientHeight;
-        redrawOverlay();
     }
 
     window.onresize = () => {
-        if (previewImg.complete && previewImg.clientWidth > 0) setupOverlay();
+        if (previewImg.complete && previewImg.clientWidth > 0) {
+            setupOverlay();
+            redrawOverlay();
+        }
     };
 
     document.querySelectorAll('.tool-btn[data-tool]').forEach(btn => {
@@ -617,18 +912,33 @@
             document.querySelectorAll('.tool-btn[data-tool]').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             currentTool = btn.dataset.tool;
+            if (currentTool !== 'select') {
+                selectedAnnotationId = null;
+                updateSelectionBar();
+                redrawOverlay();
+            }
         };
     });
+
+    function renumberAnnotations(item) {
+        let n = 1;
+        item.annotations.forEach(a => {
+            if (a.type === 'number' || (a.number !== null && a.number !== undefined)) {
+                a.number = n++;
+            }
+        });
+        item.numberCounter = n;
+    }
 
     document.getElementById('undoBtn').onclick = () => {
         if (currentIndex === -1) return;
         const item = collection[currentIndex];
-        const removed = item.annotations.pop();
-        if (removed && (removed.type === 'number' || removed.number)) {
-            item.numberCounter = Math.max(1, item.numberCounter - 1);
-        }
+        item.annotations.pop();
+        renumberAnnotations(item);
+        selectedAnnotationId = null;
         redrawOverlay();
-        autoFormatIndications();
+        updateSelectionBar();
+        autoFormatIndications(item);
         autoSaveToIndexedDB();
     };
 
@@ -637,10 +947,154 @@
         const item = collection[currentIndex];
         item.annotations = [];
         item.numberCounter = 1;
+        selectedAnnotationId = null;
         redrawOverlay();
-        autoFormatIndications();
+        updateSelectionBar();
+        autoFormatIndications(item);
         autoSaveToIndexedDB();
     };
+
+    // --- SELECCIÓN, EDICIÓN Y BORRADO DE ANOTACIONES INDIVIDUALES ---
+    function updateSelectionBar() {
+        if (!selectedAnnotationId || currentIndex === -1) {
+            selectionBar.style.display = 'none';
+            return;
+        }
+        const a = collection[currentIndex].annotations.find(x => x.id === selectedAnnotationId);
+        if (!a) {
+            selectedAnnotationId = null;
+            selectionBar.style.display = 'none';
+            return;
+        }
+        const label = ANNOTATION_LABELS[a.type] || a.type;
+        selectionInfo.innerText = `Seleccionado: ${label}${a.number ? ' #' + a.number : ''} — cambia el color arriba para recolorear` + (a.type === 'text' ? ' (doble clic para editar el texto)' : '');
+        selectionBar.style.display = 'flex';
+    }
+
+    function deleteSelectedAnnotation() {
+        if (!selectedAnnotationId || currentIndex === -1) return;
+        const item = collection[currentIndex];
+        const idx = item.annotations.findIndex(a => a.id === selectedAnnotationId);
+        if (idx === -1) return;
+        item.annotations.splice(idx, 1);
+        renumberAnnotations(item);
+        selectedAnnotationId = null;
+        redrawOverlay();
+        updateSelectionBar();
+        autoFormatIndications(item);
+        autoSaveToIndexedDB();
+    }
+    deleteSelectedBtn.onclick = deleteSelectedAnnotation;
+
+    document.addEventListener('keydown', (e) => {
+        if (!selectedAnnotationId) return;
+        const tag = document.activeElement ? document.activeElement.tagName : '';
+        if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+        if (e.key === 'Delete' || e.key === 'Backspace') {
+            e.preventDefault();
+            deleteSelectedAnnotation();
+        }
+    });
+
+    colorPicker.oninput = () => {
+        if (selectedAnnotationId && currentIndex !== -1) {
+            const item = collection[currentIndex];
+            const a = item.annotations.find(x => x.id === selectedAnnotationId);
+            if (a && a.type !== 'blur') {
+                a.color = colorPicker.value;
+                redrawOverlay();
+                autoSaveToIndexedDB();
+            }
+        }
+    };
+
+    function fracToPixelBox(a, w, h) {
+        const x1 = a.startXf * w, y1 = a.startYf * h;
+        if (a.type === 'number') {
+            return { x1: x1 - 15, y1: y1 - 15, x2: x1 + 15, y2: y1 + 15 };
+        }
+        if (a.type === 'text') {
+            const ctx = overlayCanvas.getContext('2d');
+            ctx.font = `bold 18px 'Segoe UI', system-ui, sans-serif`;
+            const width = ctx.measureText(a.text || '').width;
+            return { x1, y1: y1 - 9, x2: x1 + Math.max(20, width), y2: y1 + 18 };
+        }
+        const x2 = a.endXf * w, y2 = a.endYf * h;
+        return { x1: Math.min(x1, x2), y1: Math.min(y1, y2), x2: Math.max(x1, x2), y2: Math.max(y1, y2) };
+    }
+
+    function hitTestAnnotation(a, px, py, w, h) {
+        const b = fracToPixelBox(a, w, h);
+        const pad = 8;
+        return px >= b.x1 - pad && px <= b.x2 + pad && py >= b.y1 - pad && py <= b.y2 + pad;
+    }
+
+    function findAnnotationAt(item, px, py, w, h) {
+        for (let i = item.annotations.length - 1; i >= 0; i--) {
+            if (hitTestAnnotation(item.annotations[i], px, py, w, h)) return item.annotations[i];
+        }
+        return null;
+    }
+
+    overlayCanvas.addEventListener('dblclick', (e) => {
+        if (currentTool !== 'select' || currentIndex === -1) return;
+        const pos = getPointerPos(e);
+        const item = collection[currentIndex];
+        const found = findAnnotationAt(item, pos.x, pos.y, overlayCanvas.width, overlayCanvas.height);
+        if (found && found.type === 'text') {
+            const newText = prompt('Editar texto:', found.text || '');
+            if (newText !== null && newText.trim() !== '') {
+                found.text = newText.trim();
+                redrawOverlay();
+                autoSaveToIndexedDB();
+            }
+        }
+    });
+
+    // --- HERRAMIENTA DE TEXTO (input flotante sobre el canvas) ---
+    function toFrac(x, y) {
+        return { xf: x / overlayCanvas.width, yf: y / overlayCanvas.height };
+    }
+
+    function openTextInputAt(x, y) {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'floating-text-input';
+        input.style.left = x + 'px';
+        input.style.top = y + 'px';
+        input.style.color = colorPicker.value;
+        canvasContainer.appendChild(input);
+        input.focus();
+
+        let committed = false;
+        const commit = () => {
+            if (committed) return;
+            committed = true;
+            const val = input.value.trim();
+            if (canvasContainer.contains(input)) canvasContainer.removeChild(input);
+            if (val && currentIndex !== -1) {
+                const item = collection[currentIndex];
+                const frac = toFrac(x, y);
+                item.annotations.push({
+                    id: nextAnnId(),
+                    type: 'text',
+                    startXf: frac.xf,
+                    startYf: frac.yf,
+                    text: val,
+                    color: colorPicker.value,
+                    number: null
+                });
+                redrawOverlay();
+                autoFormatIndications(item);
+                autoSaveToIndexedDB();
+            }
+        };
+        input.addEventListener('blur', commit);
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+            if (e.key === 'Escape') { e.preventDefault(); input.value = ''; input.blur(); }
+        });
+    }
 
     function getPointerPos(e) {
         const rect = overlayCanvas.getBoundingClientRect();
@@ -652,26 +1106,42 @@
 
     overlayCanvas.addEventListener('pointerdown', (e) => {
         if (currentIndex === -1) return;
-        overlayCanvas.setPointerCapture(e.pointerId);
-        
         const pos = getPointerPos(e);
+        const item = collection[currentIndex];
+
+        if (currentTool === 'select') {
+            const found = findAnnotationAt(item, pos.x, pos.y, overlayCanvas.width, overlayCanvas.height);
+            selectedAnnotationId = found ? found.id : null;
+            redrawOverlay();
+            updateSelectionBar();
+            return;
+        }
+
+        if (currentTool === 'text') {
+            openTextInputAt(pos.x, pos.y);
+            return;
+        }
+
+        overlayCanvas.setPointerCapture(e.pointerId);
+
         startX = pos.x;
         startY = pos.y;
         lastX = pos.x;
         lastY = pos.y;
 
-        const item = collection[currentIndex];
         if (currentTool === 'number') {
-            item.annotations.push({ 
-                type: 'number', 
-                startX, 
-                startY, 
-                number: item.numberCounter, 
-                color: colorPicker.value 
+            const frac = toFrac(startX, startY);
+            item.annotations.push({
+                id: nextAnnId(),
+                type: 'number',
+                startXf: frac.xf,
+                startYf: frac.yf,
+                number: item.numberCounter,
+                color: colorPicker.value
             });
             item.numberCounter++;
             redrawOverlay();
-            autoFormatIndications();
+            autoFormatIndications(item);
             autoSaveToIndexedDB();
         } else {
             isDrawing = true;
@@ -679,21 +1149,23 @@
     });
 
     overlayCanvas.addEventListener('pointermove', (e) => {
-        if (!isDrawing || currentTool === 'number' || currentIndex === -1) return;
-        
+        if (!isDrawing || currentIndex === -1) return;
+
         const pos = getPointerPos(e);
         lastX = pos.x;
         lastY = pos.y;
         redrawOverlay();
 
-        const numToPreview = autoNumberShapesCheck.checked ? collection[currentIndex].numberCounter : null;
+        const numToPreview = (autoNumberShapesCheck.checked && NUMBERABLE_TYPES.includes(currentTool))
+            ? collection[currentIndex].numberCounter
+            : null;
         drawShape(overlayCanvas.getContext('2d'), startX, startY, lastX, lastY, currentTool, colorPicker.value, 4, 1, numToPreview);
     });
 
     function endDrawing(e) {
-        if (!isDrawing || currentTool === 'number' || currentIndex === -1) return;
+        if (!isDrawing || currentIndex === -1) return;
         isDrawing = false;
-        
+
         try {
             if (overlayCanvas.hasPointerCapture(e.pointerId)) {
                 overlayCanvas.releasePointerCapture(e.pointerId);
@@ -706,20 +1178,23 @@
 
         if (Math.abs(endX - startX) > 6 || Math.abs(endY - startY) > 6) {
             let assignedNum = null;
-            if (autoNumberShapesCheck.checked) {
+            if (autoNumberShapesCheck.checked && NUMBERABLE_TYPES.includes(currentTool)) {
                 assignedNum = item.numberCounter;
                 item.numberCounter++;
             }
-            item.annotations.push({ 
-                type: currentTool, 
-                startX, 
-                startY, 
-                endX, 
-                endY, 
+            const s = toFrac(startX, startY);
+            const en = toFrac(endX, endY);
+            item.annotations.push({
+                id: nextAnnId(),
+                type: currentTool,
+                startXf: s.xf,
+                startYf: s.yf,
+                endXf: en.xf,
+                endYf: en.yf,
                 color: colorPicker.value,
                 number: assignedNum
             });
-            autoFormatIndications();
+            autoFormatIndications(item);
             autoSaveToIndexedDB();
         }
         redrawOverlay();
@@ -728,25 +1203,33 @@
     overlayCanvas.addEventListener('pointerup', endDrawing);
     overlayCanvas.addEventListener('pointercancel', endDrawing);
 
-    function autoFormatIndications() {
-        if (!autoInstructionsCheck.checked || currentIndex === -1) return;
-        const item = collection[currentIndex];
+    function autoFormatIndications(item) {
+        if (!autoInstructionsCheck.checked || currentIndex === -1 || collection[currentIndex] !== item) return;
 
-        const numberedItems = item.annotations.filter(a => a.type === 'number' || a.number);
+        const numberedItems = item.annotations.filter(a => a.type === 'number' || (a.number !== null && a.number !== undefined));
         if (numberedItems.length === 0) return;
 
-        let currentText = indicationsInput.value.trim();
-        if (!currentText || /^\d+\s*\.-\s*/.test(currentText)) {
-            let generatedLines = numberedItems.map((n) => {
-                const num = n.number;
-                return `${num} .- `;
-            }).join("\n");
+        const currentText = (item.indications || '').trim();
+        const lines = currentText ? currentText.split('\n') : [];
+        const hasNumberedLine = lines.some(l => /^\s*\d+\s*\.-/.test(l));
 
-            indicationsInput.value = generatedLines;
-            item.indications = generatedLines;
-            updatePreview();
-            autoSaveToIndexedDB();
-        }
+        // Si el usuario escribió texto libre (sin formato numerado), no lo pisamos.
+        if (currentText && !hasNumberedLine) return;
+
+        const map = {};
+        lines.forEach(l => {
+            const m = l.match(/^\s*(\d+)\s*\.-\s*(.*)$/);
+            if (m) map[m[1]] = m[2];
+        });
+
+        const generatedLines = numberedItems.map(a => {
+            const rest = map[a.number] !== undefined ? map[a.number] : '';
+            return `${a.number} .- ${rest}`.replace(/\s+$/, '');
+        }).join('\n');
+
+        indicationsInput.value = generatedLines;
+        item.indications = generatedLines;
+        updatePreview();
     }
 
     function redrawOverlay() {
@@ -754,13 +1237,37 @@
         ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
         if (currentIndex === -1) return;
 
-        collection[currentIndex].annotations.forEach(item => {
-            if (item.type === 'number') {
-                drawNumber(ctx, item.startX, item.startY, item.number, item.color, 1);
+        const item = collection[currentIndex];
+        const w = overlayCanvas.width, h = overlayCanvas.height;
+
+        if (item.watermarkEnabled) drawWatermark(ctx, w, h);
+
+        item.annotations.forEach(a => {
+            const x1 = a.startXf * w, y1 = a.startYf * h;
+            if (a.type === 'number') {
+                drawNumber(ctx, x1, y1, a.number, a.color, 1);
+            } else if (a.type === 'text') {
+                drawText(ctx, x1, y1, a.text, a.color, 1);
+            } else if (a.type === 'blur') {
+                pixelateRegionFromImg(ctx, previewImg, a, w, h);
             } else {
-                drawShape(ctx, item.startX, item.startY, item.endX, item.endY, item.type, item.color, 4, 1, item.number);
+                const x2 = a.endXf * w, y2 = a.endYf * h;
+                drawShape(ctx, x1, y1, x2, y2, a.type, a.color, 4, 1, a.number);
             }
         });
+
+        if (selectedAnnotationId) {
+            const sel = item.annotations.find(a => a.id === selectedAnnotationId);
+            if (sel) {
+                const b = fracToPixelBox(sel, w, h);
+                ctx.save();
+                ctx.setLineDash([6, 4]);
+                ctx.strokeStyle = '#6366f1';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(b.x1 - 6, b.y1 - 6, (b.x2 - b.x1) + 12, (b.y2 - b.y1) + 12);
+                ctx.restore();
+            }
+        }
     }
 
     function drawNumber(ctx, x, y, num, color, scale) {
@@ -780,7 +1287,60 @@
         ctx.fillText(num, x, y);
     }
 
+    function drawText(ctx, x, y, text, color, scale) {
+        const size = Math.round(18 * scale);
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+        ctx.font = `bold ${size}px 'Segoe UI', system-ui, sans-serif`;
+        ctx.lineWidth = Math.max(2, 3 * scale);
+        ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+        ctx.strokeText(text || '', x, y);
+        ctx.fillStyle = color;
+        ctx.fillText(text || '', x, y);
+    }
+
+    function pixelateRegionFromImg(ctx, imgEl, a, destW, destH) {
+        const nw = imgEl.naturalWidth || imgEl.width;
+        const nh = imgEl.naturalHeight || imgEl.height;
+        if (!nw || !nh) return;
+
+        const sx1 = a.startXf * nw, sy1 = a.startYf * nh;
+        const sx2 = a.endXf * nw, sy2 = a.endYf * nh;
+        const sX = Math.min(sx1, sx2), sY = Math.min(sy1, sy2);
+        const sW = Math.max(1, Math.abs(sx2 - sx1)), sH = Math.max(1, Math.abs(sy2 - sy1));
+
+        const dx1 = a.startXf * destW, dy1 = a.startYf * destH;
+        const dx2 = a.endXf * destW, dy2 = a.endYf * destH;
+        const dX = Math.min(dx1, dx2), dY = Math.min(dy1, dy2);
+        const dW = Math.max(1, Math.abs(dx2 - dx1)), dH = Math.max(1, Math.abs(dy2 - dy1));
+
+        const blockSize = Math.max(4, Math.round(Math.min(sW, sH) / 12));
+        const tw = Math.max(1, Math.round(sW / blockSize));
+        const th = Math.max(1, Math.round(sH / blockSize));
+
+        const tmp = document.createElement('canvas');
+        tmp.width = tw;
+        tmp.height = th;
+        const tctx = tmp.getContext('2d');
+        tctx.drawImage(imgEl, sX, sY, sW, sH, 0, 0, tw, th);
+
+        ctx.save();
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(tmp, 0, 0, tw, th, dX, dY, dW, dH);
+        ctx.restore();
+    }
+
     function drawShape(ctx, x1, y1, x2, y2, type, color, lineWidth, scale, badgeNumber = null) {
+        if (type === 'blur') {
+            ctx.save();
+            ctx.setLineDash([6, 4]);
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(Math.min(x1, x2), Math.min(y1, y2), Math.abs(x2 - x1), Math.abs(y2 - y1));
+            ctx.restore();
+            return;
+        }
+
         ctx.strokeStyle = color;
         ctx.fillStyle = color;
         ctx.lineWidth = lineWidth * scale;
@@ -818,6 +1378,14 @@
             if (badgeNumber !== null && badgeNumber !== undefined) {
                 const badgeY = centerY - radiusY;
                 drawNumber(ctx, centerX, badgeY, badgeNumber, color, scale);
+            }
+        } else if (type === 'rect') {
+            const rx = Math.min(x1, x2), ry = Math.min(y1, y2);
+            const rw = Math.abs(x2 - x1), rh = Math.abs(y2 - y1);
+            ctx.strokeRect(rx, ry, rw, rh);
+
+            if (badgeNumber !== null && badgeNumber !== undefined) {
+                drawNumber(ctx, rx, ry, badgeNumber, color, scale);
             }
         }
     }
@@ -860,12 +1428,15 @@
             const img = new Image();
             img.src = item.dataUrl;
             img.onload = () => {
+                const dims = computeDisplayDims(img.width, img.height);
+                migrateItemIfNeeded(item, dims.w, dims.h);
+
                 const c = document.createElement('canvas');
                 const ctx = c.getContext('2d');
 
                 const pad = Math.max(30, Math.round(img.width * 0.04));
                 const maxW = Math.max(100, img.width - (pad * 2));
-                
+
                 const titleSize = Math.max(20, Math.round(img.width * 0.032));
                 const bodySize = Math.max(16, Math.round(img.width * 0.026));
                 const lineH_title = titleSize * 1.4;
@@ -903,15 +1474,21 @@
                 ctx.fillRect(0, 0, c.width, c.height);
                 ctx.drawImage(img, 0, 0);
 
-                const scaleX = img.width / (overlayCanvas.width || img.width);
-                const scaleY = img.height / (overlayCanvas.height || img.height);
-                const avgScale = (scaleX + scaleY) / 2;
+                const avgScale = img.width / (overlayCanvas.width || img.width);
+
+                if (item.watermarkEnabled) drawWatermark(ctx, img.width, img.height);
 
                 item.annotations.forEach(an => {
+                    const x1 = an.startXf * img.width, y1 = an.startYf * img.height;
                     if (an.type === 'number') {
-                        drawNumber(ctx, an.startX * scaleX, an.startY * scaleY, an.number, an.color, avgScale);
+                        drawNumber(ctx, x1, y1, an.number, an.color, avgScale);
+                    } else if (an.type === 'text') {
+                        drawText(ctx, x1, y1, an.text, an.color, avgScale);
+                    } else if (an.type === 'blur') {
+                        pixelateRegionFromImg(ctx, img, an, img.width, img.height);
                     } else {
-                        drawShape(ctx, an.startX * scaleX, an.startY * scaleY, an.endX * scaleX, an.endY * scaleY, an.type, an.color, 4, avgScale, an.number);
+                        const x2 = an.endXf * img.width, y2 = an.endYf * img.height;
+                        drawShape(ctx, x1, y1, x2, y2, an.type, an.color, 4, avgScale, an.number);
                     }
                 });
 
@@ -973,7 +1550,7 @@
         saveCurrentEditorState();
         const canvas = await renderItemToCanvas(collection[currentIndex]);
         const config = getExportConfig();
-        
+
         canvas.toBlob((blob) => {
             const link = document.createElement('a');
             link.download = `imagen_editada_${currentIndex + 1}.${config.ext}`;
@@ -992,8 +1569,8 @@
                 await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
                 showToast("¡Imagen copiada al portapapeles!");
             }, 'image/png');
-        } catch (err) { 
-            alert("No se pudo copiar directamente al portapapeles en este dispositivo."); 
+        } catch (err) {
+            alert("No se pudo copiar directamente al portapapeles en este dispositivo.");
         }
     };
 
@@ -1009,6 +1586,7 @@
             const base64Data = canvas.toDataURL(config.format, config.quality).split(',')[1];
             zip.file(`editada_${i + 1}.${config.ext}`, base64Data, { base64: true });
         }
+        autoSaveToIndexedDB();
 
         const content = await zip.generateAsync({ type: "blob" });
         const link = document.createElement('a');

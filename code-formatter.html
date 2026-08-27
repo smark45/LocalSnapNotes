@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>DocuSnap - Formatear Código</title>
+    <!-- highlight.js para resaltado de sintaxis (100% procesado en el navegador) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --secondary: #10b981;
+            --secondary-hover: #059669;
+            --danger: #ef4444;
+            --bg-body: #f8fafc;
+            --border-color: #e2e8f0;
+        }
+
+        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg-body); padding: 15px; display: flex; flex-direction: column; align-items: center; margin: 0; }
+        .container { max-width: 950px; width: 100%; background: white; padding: 25px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); box-sizing: border-box; }
+
+        h2 { color: #1e293b; margin-top: 0; font-size: 1.4rem; }
+        p.hint { color: #64748b; font-size: 0.9rem; margin-top: -8px; margin-bottom: 18px; line-height: 1.5; }
+
+        /* Navegación entre páginas de la suite DocuSnap */
+        .app-nav { width: 100%; max-width: 950px; box-sizing: border-box; display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+        .app-nav-link { text-decoration: none; padding: 9px 16px; border-radius: 8px; font-weight: 600; font-size: 0.85rem; color: #334155; background: white; border: 1px solid var(--border-color); transition: 0.2s; }
+        .app-nav-link:hover { background: #eef2ff; border-color: var(--primary); }
+        .app-nav-link.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        .tools-bar { display: flex; gap: 8px; margin-bottom: 12px; background: #f1f5f9; padding: 10px; border-radius: 10px; align-items: center; flex-wrap: wrap; }
+
+        label.field-label { font-size: 0.85rem; font-weight: 600; color: #334155; display: flex; align-items: center; gap: 6px; }
+        select, .tools-bar input[type="range"] { padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border-color); font-family: inherit; font-size: 0.85rem; background: white; }
+        .checkbox-group { display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; color: #475569; cursor: pointer; }
+
+        textarea#codeInput { width: 100%; min-height: 220px; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; margin: 6px 0 15px 0; resize: vertical; box-sizing: border-box; font-family: 'Consolas', 'Courier New', monospace; font-size: 0.9rem; tab-size: 4; }
+        textarea#codeInput:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15); }
+
+        .preview-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; flex-wrap: wrap; gap: 8px; }
+        .preview-header b { font-size: 0.95rem; color: #334155; }
+        #detectedLang { font-size: 0.8rem; color: #64748b; }
+
+        .preview-wrap { border: 2px solid var(--border-color); border-radius: 12px; overflow: hidden; margin-bottom: 15px; }
+        #previewPre { margin: 0; padding: 16px; overflow: auto; max-height: 480px; }
+        #previewCode { font-family: 'Consolas', 'Courier New', monospace; white-space: pre; line-height: 1.55; }
+
+        #previewPre.theme-light { background: #ffffff; color: #24292e; }
+        #previewPre.theme-dark { background: #282c34; color: #abb2bf; }
+        #previewPre.theme-monokai { background: #272822; color: #f8f8f2; }
+        #previewPre.theme-dracula { background: #282a36; color: #f8f8f2; }
+        #previewPre.theme-solarized-light { background: #fdf6e3; color: #657b83; }
+        #previewPre.theme-nord { background: #2e3440; color: #d8dee9; }
+
+        .preview-wrap.theme-light { border-color: #d0d7de; }
+        .preview-wrap.theme-dark { border-color: #282c34; }
+        .preview-wrap.theme-monokai { border-color: #272822; }
+        .preview-wrap.theme-dracula { border-color: #282a36; }
+        .preview-wrap.theme-solarized-light { border-color: #eee8d5; }
+        .preview-wrap.theme-nord { border-color: #2e3440; }
+
+        /* Paleta clara estilo GitHub */
+        .theme-light .hljs-comment, .theme-light .hljs-quote { color: #6a737d; font-style: italic; }
+        .theme-light .hljs-keyword, .theme-light .hljs-selector-tag, .theme-light .hljs-tag, .theme-light .hljs-name, .theme-light .hljs-literal { color: #d73a49; }
+        .theme-light .hljs-string, .theme-light .hljs-regexp, .theme-light .hljs-addition, .theme-light .hljs-attr, .theme-light .hljs-meta-string { color: #032f62; }
+        .theme-light .hljs-number, .theme-light .hljs-meta { color: #005cc5; }
+        .theme-light .hljs-title, .theme-light .hljs-section, .theme-light .hljs-selector-id, .theme-light .hljs-selector-class, .theme-light .hljs-class { color: #6f42c1; }
+        .theme-light .hljs-built_in, .theme-light .hljs-type { color: #005cc5; }
+        .theme-light .hljs-function, .theme-light .hljs-params { color: #24292e; }
+        .theme-light .hljs-attribute, .theme-light .hljs-variable, .theme-light .hljs-template-variable { color: #e36209; }
+        .theme-light .hljs-symbol, .theme-light .hljs-bullet, .theme-light .hljs-link { color: #22863a; }
+        .theme-light .hljs-deletion { color: #b31d28; background: #ffeef0; }
+        .theme-light .hljs-addition { background: #f0fff4; }
+        .theme-light .hljs-strong { font-weight: bold; }
+        .theme-light .hljs-emphasis { font-style: italic; }
+
+        /* Paleta oscura estilo One Dark */
+        .theme-dark .hljs-comment, .theme-dark .hljs-quote { color: #5c6370; font-style: italic; }
+        .theme-dark .hljs-keyword, .theme-dark .hljs-selector-tag { color: #c678dd; }
+        .theme-dark .hljs-tag, .theme-dark .hljs-name { color: #e06c75; }
+        .theme-dark .hljs-string, .theme-dark .hljs-regexp, .theme-dark .hljs-addition, .theme-dark .hljs-attr, .theme-dark .hljs-meta-string { color: #98c379; }
+        .theme-dark .hljs-number, .theme-dark .hljs-literal { color: #d19a66; }
+        .theme-dark .hljs-title, .theme-dark .hljs-section, .theme-dark .hljs-selector-id, .theme-dark .hljs-selector-class, .theme-dark .hljs-class { color: #e5c07b; }
+        .theme-dark .hljs-built_in, .theme-dark .hljs-type { color: #56b6c2; }
+        .theme-dark .hljs-function, .theme-dark .hljs-params { color: #61afef; }
+        .theme-dark .hljs-attribute, .theme-dark .hljs-variable, .theme-dark .hljs-template-variable { color: #d19a66; }
+        .theme-dark .hljs-symbol, .theme-dark .hljs-bullet, .theme-dark .hljs-link, .theme-dark .hljs-meta { color: #56b6c2; }
+        .theme-dark .hljs-deletion { color: #e06c75; background: rgba(224,108,117,0.15); }
+        .theme-dark .hljs-addition { background: rgba(152,195,121,0.15); }
+        .theme-dark .hljs-strong { font-weight: bold; }
+        .theme-dark .hljs-emphasis { font-style: italic; }
+
+        /* Paleta Monokai */
+        .theme-monokai .hljs-comment, .theme-monokai .hljs-quote { color: #75715e; font-style: italic; }
+        .theme-monokai .hljs-keyword, .theme-monokai .hljs-selector-tag, .theme-monokai .hljs-tag, .theme-monokai .hljs-name { color: #f92672; }
+        .theme-monokai .hljs-string, .theme-monokai .hljs-regexp, .theme-monokai .hljs-addition, .theme-monokai .hljs-attr, .theme-monokai .hljs-meta-string { color: #e6db74; }
+        .theme-monokai .hljs-number, .theme-monokai .hljs-literal { color: #ae81ff; }
+        .theme-monokai .hljs-title, .theme-monokai .hljs-section, .theme-monokai .hljs-selector-id, .theme-monokai .hljs-selector-class, .theme-monokai .hljs-class { color: #a6e22e; }
+        .theme-monokai .hljs-built_in, .theme-monokai .hljs-type { color: #66d9ef; font-style: italic; }
+        .theme-monokai .hljs-function, .theme-monokai .hljs-params { color: #a6e22e; }
+        .theme-monokai .hljs-attribute, .theme-monokai .hljs-variable, .theme-monokai .hljs-template-variable { color: #fd971f; }
+        .theme-monokai .hljs-symbol, .theme-monokai .hljs-bullet, .theme-monokai .hljs-link, .theme-monokai .hljs-meta { color: #66d9ef; }
+        .theme-monokai .hljs-deletion { color: #f92672; background: rgba(249,38,114,0.15); }
+        .theme-monokai .hljs-addition { background: rgba(230,219,116,0.15); }
+        .theme-monokai .hljs-strong { font-weight: bold; }
+        .theme-monokai .hljs-emphasis { font-style: italic; }
+
+        /* Paleta Dracula */
+        .theme-dracula .hljs-comment, .theme-dracula .hljs-quote { color: #6272a4; font-style: italic; }
+        .theme-dracula .hljs-keyword, .theme-dracula .hljs-selector-tag, .theme-dracula .hljs-tag, .theme-dracula .hljs-name { color: #ff79c6; }
+        .theme-dracula .hljs-string, .theme-dracula .hljs-regexp, .theme-dracula .hljs-addition, .theme-dracula .hljs-attr, .theme-dracula .hljs-meta-string { color: #f1fa8c; }
+        .theme-dracula .hljs-number, .theme-dracula .hljs-literal { color: #bd93f9; }
+        .theme-dracula .hljs-title, .theme-dracula .hljs-section, .theme-dracula .hljs-selector-id, .theme-dracula .hljs-selector-class, .theme-dracula .hljs-class { color: #50fa7b; }
+        .theme-dracula .hljs-built_in, .theme-dracula .hljs-type { color: #8be9fd; }
+        .theme-dracula .hljs-function, .theme-dracula .hljs-params { color: #50fa7b; }
+        .theme-dracula .hljs-attribute, .theme-dracula .hljs-variable, .theme-dracula .hljs-template-variable { color: #ffb86c; }
+        .theme-dracula .hljs-symbol, .theme-dracula .hljs-bullet, .theme-dracula .hljs-link, .theme-dracula .hljs-meta { color: #8be9fd; }
+        .theme-dracula .hljs-deletion { color: #ff5555; background: rgba(255,85,85,0.15); }
+        .theme-dracula .hljs-addition { background: rgba(80,250,123,0.15); }
+        .theme-dracula .hljs-strong { font-weight: bold; }
+        .theme-dracula .hljs-emphasis { font-style: italic; }
+
+        /* Paleta Solarized Light */
+        .theme-solarized-light .hljs-comment, .theme-solarized-light .hljs-quote { color: #93a1a1; font-style: italic; }
+        .theme-solarized-light .hljs-keyword, .theme-solarized-light .hljs-selector-tag, .theme-solarized-light .hljs-tag, .theme-solarized-light .hljs-name { color: #859900; }
+        .theme-solarized-light .hljs-string, .theme-solarized-light .hljs-regexp, .theme-solarized-light .hljs-addition, .theme-solarized-light .hljs-attr, .theme-solarized-light .hljs-meta-string { color: #2aa198; }
+        .theme-solarized-light .hljs-number, .theme-solarized-light .hljs-literal { color: #d33682; }
+        .theme-solarized-light .hljs-title, .theme-solarized-light .hljs-section, .theme-solarized-light .hljs-selector-id, .theme-solarized-light .hljs-selector-class, .theme-solarized-light .hljs-class { color: #268bd2; }
+        .theme-solarized-light .hljs-built_in, .theme-solarized-light .hljs-type { color: #b58900; }
+        .theme-solarized-light .hljs-function, .theme-solarized-light .hljs-params { color: #268bd2; }
+        .theme-solarized-light .hljs-attribute, .theme-solarized-light .hljs-variable, .theme-solarized-light .hljs-template-variable { color: #cb4b16; }
+        .theme-solarized-light .hljs-symbol, .theme-solarized-light .hljs-bullet, .theme-solarized-light .hljs-link, .theme-solarized-light .hljs-meta { color: #6c71c4; }
+        .theme-solarized-light .hljs-deletion { color: #dc322f; background: rgba(220,50,47,0.1); }
+        .theme-solarized-light .hljs-addition { background: rgba(133,153,0,0.1); }
+        .theme-solarized-light .hljs-strong { font-weight: bold; }
+        .theme-solarized-light .hljs-emphasis { font-style: italic; }
+
+        /* Paleta Nord */
+        .theme-nord .hljs-comment, .theme-nord .hljs-quote { color: #616e88; font-style: italic; }
+        .theme-nord .hljs-keyword, .theme-nord .hljs-selector-tag, .theme-nord .hljs-tag, .theme-nord .hljs-name { color: #81a1c1; }
+        .theme-nord .hljs-string, .theme-nord .hljs-regexp, .theme-nord .hljs-addition, .theme-nord .hljs-attr, .theme-nord .hljs-meta-string { color: #a3be8c; }
+        .theme-nord .hljs-number, .theme-nord .hljs-literal { color: #b48ead; }
+        .theme-nord .hljs-title, .theme-nord .hljs-section, .theme-nord .hljs-selector-id, .theme-nord .hljs-selector-class, .theme-nord .hljs-class { color: #88c0d0; }
+        .theme-nord .hljs-built_in, .theme-nord .hljs-type { color: #8fbcbb; }
+        .theme-nord .hljs-function, .theme-nord .hljs-params { color: #88c0d0; }
+        .theme-nord .hljs-attribute, .theme-nord .hljs-variable, .theme-nord .hljs-template-variable { color: #d08770; }
+        .theme-nord .hljs-symbol, .theme-nord .hljs-bullet, .theme-nord .hljs-link, .theme-nord .hljs-meta { color: #81a1c1; }
+        .theme-nord .hljs-deletion { color: #bf616a; background: rgba(191,97,106,0.15); }
+        .theme-nord .hljs-addition { background: rgba(163,190,140,0.15); }
+        .theme-nord .hljs-strong { font-weight: bold; }
+        .theme-nord .hljs-emphasis { font-style: italic; }
+
+        .button-group { display: flex; gap: 10px; margin-top: 4px; flex-wrap: wrap; }
+        button { padding: 10px 14px; border: none; border-radius: 8px; font-size: 0.95rem; font-weight: 600; cursor: pointer; color: white; transition: 0.2s; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-copy { background: var(--primary); flex: 1; padding: 12px; }
+        .btn-copy:hover:not(:disabled) { background: var(--primary-hover); }
+        .btn-copy-plain { background: var(--secondary); flex: 1; padding: 12px; }
+        .btn-copy-plain:hover:not(:disabled) { background: var(--secondary-hover); }
+
+        #toast { position: fixed; bottom: 20px; right: 20px; background: #1e293b; color: white; padding: 10px 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); display: none; font-size: 0.9rem; z-index: 1000; max-width: 320px; }
+        #loadError { display: none; background: #fee2e2; border: 1px solid #fca5a5; color: #b91c1c; padding: 10px 14px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+
+<nav class="app-nav">
+    <a href="index.html" class="app-nav-link">🎨 Anotador de Imágenes</a>
+    <a href="code-formatter.html" class="app-nav-link active">💻 Formatear Código</a>
+</nav>
+
+<div class="container">
+    <h2>💻 Formateador de Código</h2>
+    <p class="hint">Pega tu código, elige el lenguaje (o déjalo en automático) y copia el resultado con colores listo para pegar en Word, Google Docs, Slack o cualquier editor que acepte texto enriquecido. Todo se procesa en tu navegador, nada se sube a un servidor.</p>
+
+    <div id="loadError">⚠️ No se pudo cargar el resaltador de sintaxis (sin conexión a internet). Puedes seguir escribiendo tu código y copiarlo como texto plano.</div>
+
+    <div class="tools-bar">
+        <label class="field-label">Lenguaje:
+            <select id="langSelect"><option value="auto">Auto-detectar</option></select>
+        </label>
+        <label class="field-label">Tema:
+            <select id="themeSelect">
+                <option value="light" selected>Claro (GitHub)</option>
+                <option value="solarized-light">Claro (Solarized)</option>
+                <option value="dark">Oscuro (One Dark)</option>
+                <option value="monokai">Oscuro (Monokai)</option>
+                <option value="dracula">Oscuro (Dracula)</option>
+                <option value="nord">Oscuro (Nord)</option>
+            </select>
+        </label>
+        <label class="field-label">Tamaño: <input type="range" id="fontSizeRange" min="12" max="20" value="14"><span id="fontSizeLabel">14px</span></label>
+        <label class="checkbox-group"><input type="checkbox" id="tabsCheck" checked> Convertir tabs a 4 espacios</label>
+    </div>
+
+    <textarea id="codeInput" placeholder="Pega o escribe aquí tu código..." spellcheck="false" autocomplete="off"></textarea>
+
+    <div class="preview-header">
+        <b>Vista previa</b>
+        <span id="detectedLang"></span>
+    </div>
+    <div class="preview-wrap theme-light" id="previewWrap">
+        <pre id="previewPre" class="theme-light"><code id="previewCode" class="theme-light"></code></pre>
+    </div>
+
+    <div class="button-group">
+        <button id="copyFormattedBtn" class="btn-copy">📋 Copiar con formato (para Word)</button>
+        <button id="copyPlainBtn" class="btn-copy-plain">📋 Copiar texto plano</button>
+    </div>
+    <p class="hint" style="margin-top: 10px; margin-bottom: 0;">💡 Si al pegar con <b>Ctrl+V</b> en Word solo aparece texto sin color, busca el icono de "Opciones de pegado" que aparece justo después de pegar y elige <b>"Mantener formato de origen"</b> (o clic derecho → Pegado especial → HTML). Word recuerda la última opción usada y puede estar fijado en "Mantener solo texto".</p>
+</div>
+
+<div id="toast">¡Notificación!</div>
+
+<script>
+    const codeInput = document.getElementById('codeInput'),
+          langSelect = document.getElementById('langSelect'),
+          themeSelect = document.getElementById('themeSelect'),
+          fontSizeRange = document.getElementById('fontSizeRange'),
+          fontSizeLabel = document.getElementById('fontSizeLabel'),
+          tabsCheck = document.getElementById('tabsCheck'),
+          previewWrap = document.getElementById('previewWrap'),
+          previewPre = document.getElementById('previewPre'),
+          previewCode = document.getElementById('previewCode'),
+          detectedLang = document.getElementById('detectedLang'),
+          copyFormattedBtn = document.getElementById('copyFormattedBtn'),
+          copyPlainBtn = document.getElementById('copyPlainBtn'),
+          loadError = document.getElementById('loadError'),
+          toast = document.getElementById('toast');
+
+    const hljsAvailable = typeof hljs !== 'undefined';
+    if (!hljsAvailable) loadError.style.display = 'block';
+
+    function showToast(msg) {
+        toast.innerText = msg;
+        toast.style.display = 'block';
+        setTimeout(() => { toast.style.display = 'none'; }, 2500);
+    }
+
+    function populateLanguages() {
+        if (!hljsAvailable) return;
+        const langs = hljs.listLanguages().slice().sort();
+        langs.forEach(l => {
+            const opt = document.createElement('option');
+            opt.value = l;
+            opt.textContent = l;
+            langSelect.appendChild(opt);
+        });
+    }
+    populateLanguages();
+
+    function applyTabs(code) {
+        return tabsCheck.checked ? code.replace(/\t/g, '    ') : code;
+    }
+
+    const THEME_KEYS = ['light', 'dark', 'monokai', 'dracula', 'solarized-light', 'nord'];
+
+    function applyTheme() {
+        const theme = THEME_KEYS.includes(themeSelect.value) ? themeSelect.value : 'light';
+        previewWrap.className = 'preview-wrap theme-' + theme;
+        previewPre.className = 'theme-' + theme;
+        previewCode.className = 'theme-' + theme;
+        previewPre.style.fontSize = fontSizeRange.value + 'px';
+    }
+
+    let debounceTimer = null;
+    function scheduleHighlight() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(highlightNow, 200);
+    }
+
+    function highlightNow() {
+        const raw = applyTabs(codeInput.value);
+        applyTheme();
+
+        if (!raw.trim()) {
+            previewCode.innerHTML = '';
+            detectedLang.textContent = '';
+            return;
+        }
+
+        if (!hljsAvailable) {
+            previewCode.textContent = raw;
+            detectedLang.textContent = '';
+            return;
+        }
+
+        let result;
+        try {
+            if (langSelect.value === 'auto') {
+                result = hljs.highlightAuto(raw);
+                detectedLang.textContent = result.language ? ('Detectado: ' + result.language) : '';
+            } else {
+                result = hljs.highlight(raw, { language: langSelect.value });
+                detectedLang.textContent = '';
+            }
+            previewCode.innerHTML = result.value;
+        } catch (err) {
+            previewCode.textContent = raw;
+            detectedLang.textContent = '';
+        }
+    }
+
+    codeInput.oninput = scheduleHighlight;
+    langSelect.onchange = highlightNow;
+    themeSelect.onchange = highlightNow;
+    tabsCheck.onchange = highlightNow;
+    fontSizeRange.oninput = () => { fontSizeLabel.textContent = fontSizeRange.value + 'px'; highlightNow(); };
+
+    const THEME_COLORS = {
+        light: { bg: '#ffffff', fg: '#24292e' },
+        dark: { bg: '#282c34', fg: '#abb2bf' },
+        monokai: { bg: '#272822', fg: '#f8f8f2' },
+        dracula: { bg: '#282a36', fg: '#f8f8f2' },
+        'solarized-light': { bg: '#fdf6e3', fg: '#657b83' },
+        nord: { bg: '#2e3440', fg: '#d8dee9' }
+    };
+
+    // Convierte las clases de resaltado en estilos inline, para que el color
+    // sobreviva al pegar en aplicaciones que ignoran clases/CSS externo (Word, Docs...).
+    // Solo se aplica a los descendientes (los <span> de hljs, que se regeneran en cada
+    // resaltado); el elemento raíz nunca se toca para no dejar un color "pegado" en la
+    // vista previa si luego el usuario cambia de tema.
+    function inlineComputedStyles(root) {
+        const nodes = root.querySelectorAll('*');
+        nodes.forEach(el => {
+            const cs = getComputedStyle(el);
+            el.style.color = cs.color;
+            if (cs.fontWeight && parseInt(cs.fontWeight, 10) >= 600) el.style.fontWeight = 'bold';
+            if (cs.fontStyle === 'italic') el.style.fontStyle = 'italic';
+            if (cs.backgroundColor && cs.backgroundColor !== 'rgba(0, 0, 0, 0)' && cs.backgroundColor !== 'transparent') {
+                el.style.backgroundColor = cs.backgroundColor;
+            }
+        });
+    }
+
+    // Word colapsa espacios múltiples y a veces ignora "white-space:pre", así que los
+    // saltos de línea y la sangría se vuelven explícitos (<br> y &nbsp;) en vez de depender
+    // de CSS que el importador de Word puede no respetar.
+    function preserveWhitespaceForClipboard(html) {
+        return html
+            .replace(/\n/g, '<br>')
+            .replace(/ {2,}/g, (match) => '&nbsp;'.repeat(match.length - 1) + ' ');
+    }
+
+    // Word tiene un estilo interno "HTML Preformatted" que se autoaplica a cualquier <pre>
+    // pegado y puede pisar los colores; por eso el fragmento usa <table>/<div> en vez de
+    // <pre>, y el fondo se fija tanto por CSS como por el atributo bgcolor (el importador
+    // de Word respeta mucho mejor el color de fondo de una celda de tabla que el de un div).
+    function buildWordFragment() {
+        const colors = THEME_COLORS[THEME_KEYS.includes(themeSelect.value) ? themeSelect.value : 'light'];
+        const fontSize = fontSizeRange.value + 'px';
+        const codeHtml = preserveWhitespaceForClipboard(previewCode.innerHTML);
+        return `<table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;background-color:${colors.bg};" bgcolor="${colors.bg}"><tr><td style="background-color:${colors.bg};padding:16px;" bgcolor="${colors.bg}"><div style="font-family:Consolas,'Courier New',monospace;font-size:${fontSize};line-height:1.55;color:${colors.fg};">${codeHtml}</div></td></tr></table>`;
+    }
+
+    function fallbackSelectCopy(fragmentHtml) {
+        const holder = document.createElement('div');
+        holder.style.cssText = 'position:fixed;left:-99999px;top:0;';
+        holder.innerHTML = fragmentHtml;
+        document.body.appendChild(holder);
+        try {
+            const range = document.createRange();
+            range.selectNodeContents(holder);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+            const ok = document.execCommand('copy');
+            sel.removeAllRanges();
+            showToast(ok ? '¡Copiado! (modo compatibilidad)' : 'No se pudo copiar automáticamente. Selecciona el código y usa Ctrl+C.');
+        } catch (e) {
+            showToast('No se pudo copiar automáticamente. Selecciona el código y usa Ctrl+C.');
+        } finally {
+            document.body.removeChild(holder);
+        }
+    }
+
+    copyFormattedBtn.onclick = async () => {
+        if (!codeInput.value.trim()) { showToast('No hay código para copiar'); return; }
+
+        inlineComputedStyles(previewCode);
+        const fragment = buildWordFragment();
+        const htmlStr = `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="margin:0;">${fragment}</body></html>`;
+        const plainText = applyTabs(codeInput.value);
+
+        try {
+            if (navigator.clipboard && window.ClipboardItem) {
+                const item = new ClipboardItem({
+                    'text/html': new Blob([htmlStr], { type: 'text/html' }),
+                    'text/plain': new Blob([plainText], { type: 'text/plain' })
+                });
+                await navigator.clipboard.write([item]);
+                showToast('¡Copiado con formato! Pégalo con Ctrl+V en Word');
+                return;
+            }
+            throw new Error('Sin soporte de portapapeles enriquecido');
+        } catch (err) {
+            fallbackSelectCopy(fragment);
+        }
+    };
+
+    copyPlainBtn.onclick = async () => {
+        if (!codeInput.value.trim()) { showToast('No hay código para copiar'); return; }
+        const plainText = applyTabs(codeInput.value);
+        try {
+            await navigator.clipboard.writeText(plainText);
+            showToast('Texto plano copiado');
+        } catch (e) {
+            showToast('No se pudo copiar automáticamente. Selecciona el código y usa Ctrl+C.');
+        }
+    };
+
+    applyTheme();
+</script>
+</body>
+</html>
